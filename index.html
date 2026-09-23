@@ -152,7 +152,7 @@
       margin-bottom: 1.2em;
     }
 
-    /* Wikipedia お知らせボックス（ambox風） */
+    /* Wikipedia お知らせ・案内ボックス（ambox風） */
     .ambox {
       border: 1px solid var(--border-light);
       border-left: 10px solid var(--border);
@@ -184,6 +184,57 @@
       display: block;
       font-weight: bold;
       margin-bottom: 2px;
+    }
+
+    /* Wikipedia ヘルプ・遊び方ボックス */
+    .help-box {
+      border: 1px solid #c8ccd1;
+      background-color: #f8f9fa;
+      padding: 12px 16px;
+      margin-bottom: 1.2em;
+      border-radius: 2px;
+    }
+
+    .help-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 0.95rem;
+      color: var(--text);
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .help-toggle-btn {
+      color: var(--link);
+      font-size: 0.85rem;
+      font-weight: normal;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .help-toggle-btn:hover {
+      text-decoration: underline;
+    }
+
+    .help-content {
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    .help-content ol, .help-content ul {
+      padding-left: 20px;
+      margin-top: 6px;
+      margin-bottom: 6px;
+    }
+
+    .help-content li {
+      margin-bottom: 4px;
     }
 
     /* OOUI（MediaWiki UI）ボタンスタイル */
@@ -419,7 +470,7 @@
     </a>
   </header>
 
-  <!-- VectorタブUI（装飾＋ゲームステータス） -->
+  <!-- VectorタブUI -->
   <div id="vector-tabs-wrapper">
     <ul class="vector-tabs">
       <li class="selected">ページ</li>
@@ -436,6 +487,24 @@
   <main id="content">
     <h1 class="firstHeading" id="article-heading">推測ゲーム: 隠された記事</h1>
     <div id="siteSub">出典: フリー百科事典『ウィキペディア（Wikipedia）』</div>
+
+    <!-- 遊び方・ヘルプボックス（折りたたみ可能） -->
+    <div class="help-box">
+      <div class="help-box-header">
+        <span>📖 ヘルプ: このゲームの遊び方</span>
+        <button type="button" class="help-toggle-btn" id="help-toggle" onclick="toggleHelp()">[非表示]</button>
+      </div>
+      <div class="help-content" id="help-content">
+        <p><strong>ゲームの目的:</strong> Wikipediaの「良質な記事 / 秀逸な記事」から選ばれた、隠された記事のタイトルを当てるゲームです。</p>
+        <ol>
+          <li><strong>単語を入力して質問:</strong> 入力欄に気になる単語（2文字以上）を入力し送信します。</li>
+          <li><strong>出現回数を確認:</strong> その単語が記事本文に何回含まれているかが返ってきます。</li>
+          <li><strong>文脈を絞り込む:</strong> 「歴史」「日本」「科学」「人物」など広めの単語から質問し、どんなテーマの記事か推理を深めましょう。</li>
+          <li><strong>タイトルをズバリ的中:</strong> 記事名そのものを入力すると<strong>正解（ゲームクリア）</strong>となります！</li>
+          <li><strong>ヒント機能:</strong> どうしても分からない場合は「💡 ヒントを開示」で最大3回まで（文字数 → 冒頭文 → 頭文字）手がかりを取得できます。</li>
+        </ol>
+      </div>
+    </div>
 
     <!-- ローディング表示 -->
     <div id="loading-view">
@@ -460,15 +529,6 @@
 
     <!-- ゲーム操作エリア -->
     <div id="game-container" style="display: none;">
-      
-      <!-- 記事解説テンプレート（ルール説明） -->
-      <div class="ambox ambox-notice">
-        <div class="ambox-icon">ℹ️</div>
-        <div class="ambox-content">
-          <strong>この記事のタイトルは何でしょう？</strong>
-          <span>単語を入力して質問してください。その単語が記事本文に含まれる出現回数が表示されます。タイトルを的中させるとクリアです。</span>
-        </div>
-      </div>
 
       <!-- ヒントエリア（ambox-warning） -->
       <div id="hints-ambox" class="ambox ambox-warning" style="display: none;">
@@ -539,6 +599,19 @@
     let hintsUsed = 0;
     let openedHints = [];
     let isGameOver = false;
+
+    // 遊び方ボックスの開閉トグル
+    function toggleHelp() {
+      const content = document.getElementById('help-content');
+      const btn = document.getElementById('help-toggle');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        btn.textContent = '[非表示]';
+      } else {
+        content.style.display = 'none';
+        btn.textContent = '[表示]';
+      }
+    }
 
     // テキスト正規化
     function normalizeText(str) {
