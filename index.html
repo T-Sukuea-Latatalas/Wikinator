@@ -352,7 +352,7 @@
   <!-- ローディング画面 -->
   <div id="loading-view" class="card">
     <div class="spinner"></div>
-    <p id="loading-msg">良質な記事を探しています...</p>
+    <p id="loading-msg">良質な記事を読み込んでいます...</p>
   </div>
 
   <!-- ゲーム終了時のカード（正解 / ギブアップ） -->
@@ -432,7 +432,7 @@
   let openedHints = [];
   let isGameOver = false;
 
-  // テキスト正規化
+  // テキスト正規化（全角半角統一・小文字化）
   function normalizeText(str) {
     if (!str) return '';
     return str.normalize('NFKC').toLowerCase().trim();
@@ -450,27 +450,33 @@
     );
   }
 
-  // 1500文字以上の記事を取得
+  // 「良質な記事 / 秀逸な記事」カテゴリから1回のAPIコールで高速取得
   async function fetchQualityArticle() {
-    const MIN_LENGTH = 1500;
-    
+    const categories = ['Category:良質な記事', 'Category:秀逸な記事'];
+    const charList = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
     while (true) {
       try {
-        const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=5&prop=extracts&explaintext=1&exintro=0&origin=*&format=json`;
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        const randomChar = charList[Math.floor(Math.random() * charList.length)];
+
+        // カテゴリから指定開始位置以降の記事を20件取得
+        const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=${encodeURIComponent(category)}&gcmnamespace=0&gcmlimit=20&gcmstartsortkeyprefix=${encodeURIComponent(randomChar)}&prop=extracts&explaintext=1&exintro=0&origin=*&format=json`;
+        
         const res = await fetch(endpoint);
         const data = await res.json();
 
         if (data && data.query && data.query.pages) {
           const pages = Object.values(data.query.pages);
+          // 取得したページをランダムにシャッフル
+          pages.sort(() => Math.random() - 0.5);
+
           for (const page of pages) {
             const text = page.extract || '';
             const title = page.title || '';
 
-            if (
-              text.length >= MIN_LENGTH &&
-              !title.includes('曖昧さ回避') &&
-              !text.includes('曖昧さ回避のためのページ')
-            ) {
+            // 良質な記事・秀逸な記事なので十分な文字数があるものを採用
+            if (text.length >= 800 && !title.includes('曖昧さ回避')) {
               const cleanTitle = title.replace(/\s*\(.*?\)$/, '');
               return {
                 title: title,
@@ -485,9 +491,8 @@
           }
         }
       } catch (err) {
-        console.error('記事取得失敗。再試行します...', err);
+        console.error('記事の取得に失敗しました。再試行します...', err);
       }
-      await new Promise(r => setTimeout(r, 600));
     }
   }
 
@@ -517,7 +522,7 @@
 
     updateHintButtonUI();
 
-    // 記事の取得
+    // 記事の取得（高速）
     currentArticle = await fetchQualityArticle();
 
     // 画面表示切り替え
@@ -541,18 +546,16 @@
 
   // 伏字冒頭文の生成
   function generateMaskedSentence() {
-    // 最初の1行または最初の「。」までを取得
     const firstLine = currentArticle.extract.trim().split(/\n+/)[0] || '';
     let sentence = firstLine.split('。')[0];
     sentence = sentence ? sentence + '。' : firstLine;
 
-    // タイトル（および cleanTitle）を伏字に置換
     let masked = sentence;
     const titleRegex = new RegExp(escapeRegExp(currentArticle.cleanTitle), 'gi');
     masked = masked.replace(titleRegex, '【■■■】');
 
-    // タイトル直後の読み仮名・アルファベット括弧表記なども伏字化
-    masked = masked.replace(/（[^）]{1,60}）|\([^\\)]{1,60}\)/g, '（……）');
+    // 読み仮名や欧文併記などの括弧を伏字化
+    masked = masked.replace(/（[^）]{1,80}）|\([^\\)]{1,80}\)/g, '（……）');
 
     return escapeHtml(masked).replace(/【■■■】/g, '<strong style="color:var(--primary);">【■■■】</strong>');
   }
@@ -710,7 +713,7 @@
     document.getElementById('giveup-btn').disabled = true;
   }
 
-  // 初期ロード開始
+  // 初回起動
   window.addEventListener('DOMContentLoaded', initGame);
 </script>
 </body>
