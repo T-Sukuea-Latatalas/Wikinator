@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wikinator</title>
+  <title>WikiGuesser - Wikipedia記事推測ゲーム</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -12,6 +12,10 @@
       --success-bg: #dcfce7;
       --danger: #dc2626;
       --danger-bg: #fee2e2;
+      --warning: #d97706;
+      --warning-hover: #b45309;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
       --bg: #f8fafc;
       --card-bg: #ffffff;
       --text: #1e293b;
@@ -92,7 +96,7 @@
       to { transform: rotate(360deg); }
     }
 
-    /* 入力エリア */
+    /* 入力フォーム */
     .input-form {
       display: flex;
       gap: 8px;
@@ -113,18 +117,23 @@
     }
 
     button {
-      padding: 12px 20px;
-      font-size: 1rem;
+      padding: 10px 16px;
+      font-size: 0.95rem;
       font-weight: 600;
       border: none;
       border-radius: var(--radius);
       cursor: pointer;
-      transition: background-color 0.2s, opacity 0.2s;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.45;
       cursor: not-allowed;
+      pointer-events: none;
     }
 
     .btn-primary {
@@ -136,12 +145,21 @@
       background-color: var(--primary-hover);
     }
 
+    .btn-warning {
+      background-color: var(--warning);
+      color: #fff;
+      font-size: 0.875rem;
+    }
+
+    .btn-warning:hover:not(:disabled) {
+      background-color: var(--warning-hover);
+    }
+
     .btn-outline {
       background-color: transparent;
       border: 1px solid var(--border);
       color: var(--text-muted);
       font-size: 0.875rem;
-      padding: 8px 16px;
     }
 
     .btn-outline:hover:not(:disabled) {
@@ -149,13 +167,71 @@
       color: var(--text);
     }
 
-    .stats-bar {
+    .action-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 12px;
-      font-size: 0.875rem;
-      color: var(--text-muted);
+      margin-top: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ヒントカード */
+    #hints-card {
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .hints-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--warning-hover);
+      margin-bottom: 10px;
+    }
+
+    .hints-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hint-item {
+      font-size: 0.9rem;
+      background: #ffffff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--warning-border);
+      line-height: 1.6;
+      word-break: break-word;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .hint-item strong.hint-badge {
+      display: inline-block;
+      background: var(--warning);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .hint-highlight {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 1.05rem;
     }
 
     /* 結果通知エリア */
@@ -273,7 +349,7 @@
     <p>隠されたWikipedia記事のタイトルを推測しよう！</p>
   </header>
 
-  <!-- ローディング中 -->
+  <!-- ローディング画面 -->
   <div id="loading-view" class="card">
     <div class="spinner"></div>
     <p id="loading-msg">良質な記事を探しています...</p>
@@ -291,7 +367,7 @@
     </div>
   </div>
 
-  <!-- メインゲームエリア -->
+  <!-- メイン操作エリア -->
   <main id="game-view" class="card" style="display: none;">
     <form class="input-form" id="guess-form" onsubmit="handleGuess(event)">
       <input 
@@ -304,13 +380,30 @@
       <button type="submit" class="btn-primary" id="submit-btn">質問する</button>
     </form>
 
-    <div class="stats-bar">
-      <span>試行回数: <strong id="guess-count">0</strong> 回</span>
-      <button type="button" class="btn-outline" onclick="giveUp()" id="giveup-btn">ギブアップ</button>
+    <div class="action-bar">
+      <div style="font-size: 0.875rem; color: var(--text-muted);">
+        試行回数: <strong id="guess-count">0</strong> 回
+      </div>
+      <div class="action-group">
+        <button type="button" class="btn-warning" id="hint-btn" onclick="useHint()">
+          💡 ヒントを使う（残り 3/3回）
+        </button>
+        <button type="button" class="btn-outline" onclick="giveUp()" id="giveup-btn">
+          ギブアップ
+        </button>
+      </div>
     </div>
   </main>
 
-  <!-- 履歴表示 -->
+  <!-- ヒントカード -->
+  <section id="hints-card" class="card">
+    <div class="hints-header">
+      <span>💡 開示されたヒント</span>
+    </div>
+    <ul class="hints-list" id="hints-list"></ul>
+  </section>
+
+  <!-- 質問履歴 -->
   <section id="history-view" class="card" style="display: none;">
     <div class="history-header">
       <h3>質問の履歴</h3>
@@ -321,10 +414,12 @@
 </div>
 
 <script>
-  // ゲームの状態
+  const MAX_HINTS = 3;
+
+  // ゲーム状態
   let currentArticle = {
     title: '',
-    cleanTitle: '', // 曖昧さ回避括弧を除去したタイトル
+    cleanTitle: '',
     extract: '',
     normalizedTitle: '',
     normalizedCleanTitle: '',
@@ -333,9 +428,11 @@
   };
 
   let attempts = [];
+  let hintsUsed = 0;
+  let openedHints = [];
   let isGameOver = false;
 
-  // テキストの正規化（NFKC正規化 + 小文字化）
+  // テキスト正規化
   function normalizeText(str) {
     if (!str) return '';
     return str.normalize('NFKC').toLowerCase().trim();
@@ -346,13 +443,19 @@
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  // 1500文字以上の良質な記事を取得する
+  // HTMLエスケープ
+  function escapeHtml(str) {
+    return str.replace(/[&<>'"]/g, 
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+  }
+
+  // 1500文字以上の記事を取得
   async function fetchQualityArticle() {
     const MIN_LENGTH = 1500;
     
     while (true) {
       try {
-        // generator=randomで一度に複数件取得して効率化
         const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=5&prop=extracts&explaintext=1&exintro=0&origin=*&format=json`;
         const res = await fetch(endpoint);
         const data = await res.json();
@@ -363,13 +466,12 @@
             const text = page.extract || '';
             const title = page.title || '';
 
-            // 曖昧さ回避ページや短すぎる記事をスキップ
             if (
               text.length >= MIN_LENGTH &&
               !title.includes('曖昧さ回避') &&
               !text.includes('曖昧さ回避のためのページ')
             ) {
-              const cleanTitle = title.replace(/\s*\(.*?\)$/, ''); // 末尾の (曖昧さ回避) 等を除去
+              const cleanTitle = title.replace(/\s*\(.*?\)$/, '');
               return {
                 title: title,
                 cleanTitle: cleanTitle,
@@ -383,25 +485,29 @@
           }
         }
       } catch (err) {
-        console.error('記事の取得に失敗しました。再試行します...', err);
+        console.error('記事取得失敗。再試行します...', err);
       }
-      // 再試行のウェイト
       await new Promise(r => setTimeout(r, 600));
     }
   }
 
-  // ゲームの初期化
+  // ゲーム初期化
   async function initGame() {
     isGameOver = false;
     attempts = [];
+    hintsUsed = 0;
+    openedHints = [];
 
     // UI初期化
     document.getElementById('loading-view').style.display = 'block';
     document.getElementById('game-view').style.display = 'none';
     document.getElementById('history-view').style.display = 'none';
+    document.getElementById('hints-card').style.display = 'none';
     document.getElementById('status-card').style.display = 'none';
     document.getElementById('status-card').className = 'card';
+    
     document.getElementById('history-list').innerHTML = '';
+    document.getElementById('hints-list').innerHTML = '';
     document.getElementById('guess-count').textContent = '0';
     document.getElementById('hit-rate').textContent = '';
     document.getElementById('word-input').value = '';
@@ -409,17 +515,91 @@
     document.getElementById('submit-btn').disabled = false;
     document.getElementById('giveup-btn').disabled = false;
 
-    // 記事取得
+    updateHintButtonUI();
+
+    // 記事の取得
     currentArticle = await fetchQualityArticle();
 
-    // ゲーム画面表示
+    // 画面表示切り替え
     document.getElementById('loading-view').style.display = 'none';
     document.getElementById('game-view').style.display = 'block';
     document.getElementById('history-view').style.display = 'block';
     document.getElementById('word-input').focus();
   }
 
-  // 質問・推測の処理
+  // ヒントボタン表示の更新
+  function updateHintButtonUI() {
+    const hintBtn = document.getElementById('hint-btn');
+    const remaining = MAX_HINTS - hintsUsed;
+    hintBtn.textContent = `💡 ヒントを使う（残り ${remaining}/${MAX_HINTS}回）`;
+    if (remaining <= 0 || isGameOver) {
+      hintBtn.disabled = true;
+    } else {
+      hintBtn.disabled = false;
+    }
+  }
+
+  // 伏字冒頭文の生成
+  function generateMaskedSentence() {
+    // 最初の1行または最初の「。」までを取得
+    const firstLine = currentArticle.extract.trim().split(/\n+/)[0] || '';
+    let sentence = firstLine.split('。')[0];
+    sentence = sentence ? sentence + '。' : firstLine;
+
+    // タイトル（および cleanTitle）を伏字に置換
+    let masked = sentence;
+    const titleRegex = new RegExp(escapeRegExp(currentArticle.cleanTitle), 'gi');
+    masked = masked.replace(titleRegex, '【■■■】');
+
+    // タイトル直後の読み仮名・アルファベット括弧表記なども伏字化
+    masked = masked.replace(/（[^）]{1,60}）|\([^\\)]{1,60}\)/g, '（……）');
+
+    return escapeHtml(masked).replace(/【■■■】/g, '<strong style="color:var(--primary);">【■■■】</strong>');
+  }
+
+  // ヒントを使う処理
+  function useHint() {
+    if (isGameOver || hintsUsed >= MAX_HINTS) return;
+
+    hintsUsed++;
+    let hintContent = '';
+
+    if (hintsUsed === 1) {
+      // 1回目: 文字数
+      const charCount = currentArticle.cleanTitle.length;
+      hintContent = `<strong class="hint-badge">第1ヒント</strong> タイトルは <span class="hint-highlight">${charCount}文字</span> です（※曖昧さ回避の括弧等を除く）`;
+    } else if (hintsUsed === 2) {
+      // 2回目: 冒頭の伏字定義文
+      const masked = generateMaskedSentence();
+      hintContent = `<strong class="hint-badge">第2ヒント</strong> <strong>冒頭の解説文:</strong><br>${masked}`;
+    } else if (hintsUsed === 3) {
+      // 3回目: 頭文字
+      const firstChar = currentArticle.cleanTitle.charAt(0);
+      hintContent = `<strong class="hint-badge">第3ヒント</strong> タイトルの最初の1文字は <span class="hint-highlight">『 ${escapeHtml(firstChar)} 』</span> です`;
+    }
+
+    openedHints.push(hintContent);
+    renderHints();
+    updateHintButtonUI();
+  }
+
+  // ヒント一覧の再描画
+  function renderHints() {
+    const hintsCard = document.getElementById('hints-card');
+    const hintsList = document.getElementById('hints-list');
+
+    if (openedHints.length > 0) {
+      hintsCard.style.display = 'block';
+      hintsList.innerHTML = openedHints.map(hint => `
+        <li class="hint-item">${hint}</li>
+      `).join('');
+    } else {
+      hintsCard.style.display = 'none';
+      hintsList.innerHTML = '';
+    }
+  }
+
+  // 推測・質問処理
   function handleGuess(e) {
     e.preventDefault();
     if (isGameOver) return;
@@ -433,20 +613,17 @@
       return;
     }
 
-    // 重複入力チェック
     if (attempts.some(a => a.normalized === normalizedInput)) {
       alert('その単語はすでに質問しています。');
       inputElem.value = '';
       return;
     }
 
-    // 正解判定（タイトル完全一致、または括弧除去後のタイトル一致）
     const isCorrect = (
       normalizedInput === currentArticle.normalizedTitle ||
       normalizedInput === currentArticle.normalizedCleanTitle
     );
 
-    // 出現回数のカウント
     const regex = new RegExp(escapeRegExp(normalizedInput), 'g');
     const matches = currentArticle.normalizedExtract.match(regex);
     const count = matches ? matches.length : 0;
@@ -459,7 +636,7 @@
       isCorrect: isCorrect
     };
 
-    attempts.unshift(attempt); // 最新を先頭に追加
+    attempts.unshift(attempt);
     updateHistoryUI();
     inputElem.value = '';
 
@@ -470,7 +647,7 @@
     }
   }
 
-  // 履歴UIの更新
+  // 質問履歴UI更新
   function updateHistoryUI() {
     const listElem = document.getElementById('history-list');
     document.getElementById('guess-count').textContent = attempts.length;
@@ -488,13 +665,6 @@
     `).join('');
   }
 
-  // HTMLエスケープ
-  function escapeHtml(str) {
-    return str.replace(/[&<>'"]/g, 
-      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-    );
-  }
-
   // ゲームクリア
   function gameClear() {
     isGameOver = true;
@@ -503,7 +673,7 @@
     const statusCard = document.getElementById('status-card');
     statusCard.className = 'card win';
     document.getElementById('status-title').textContent = '🎉 正解です！お見事！';
-    document.getElementById('status-desc').textContent = `正解は「${currentArticle.title}」でした！（試行回数: ${attempts.length}回）`;
+    document.getElementById('status-desc').textContent = `正解は「${currentArticle.title}」でした！（試行回数: ${attempts.length}回 / ヒント使用: ${hintsUsed}回）`;
     
     const link = document.getElementById('status-link');
     link.href = currentArticle.url;
@@ -523,7 +693,7 @@
     const statusCard = document.getElementById('status-card');
     statusCard.className = 'card lose';
     document.getElementById('status-title').textContent = '🏳️ ギブアップ！';
-    document.getElementById('status-desc').textContent = `答えは「${currentArticle.title}」でした。`;
+    document.getElementById('status-desc').textContent = `正解は「${currentArticle.title}」でした。`;
 
     const link = document.getElementById('status-link');
     link.href = currentArticle.url;
@@ -536,10 +706,11 @@
   function finishGameControls() {
     document.getElementById('word-input').disabled = true;
     document.getElementById('submit-btn').disabled = true;
+    document.getElementById('hint-btn').disabled = true;
     document.getElementById('giveup-btn').disabled = true;
   }
 
-  // ゲーム開始
+  // 初期ロード開始
   window.addEventListener('DOMContentLoaded', initGame);
 </script>
 </body>
