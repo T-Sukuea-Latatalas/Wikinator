@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>推測ゲーム - ウィキペディア (Redactle風・全文版)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>推測ゲーム - ウィキペディア (レスポンシブ・全文版)</title>
   <style>
     :root {
       --wiki-bg: #f6f6f6;
@@ -27,24 +27,19 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
       font-size: 14px;
       line-height: 1.6;
-      padding: 0 1em 2em;
     }
 
+    /* ヘッダー */
     #mw-header {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 12px 0 8px;
+      padding: 12px 1em 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-
     .wiki-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text);
+      display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
     }
     .wiki-logo-icon {
       width: 32px; height: 32px; background: #000; color: #fff;
@@ -61,84 +56,58 @@
     }
     .icon-btn:hover { opacity: 1; }
 
+    /* メインコンテナ */
     #content {
       max-width: 1100px; margin: 0 auto;
       background: var(--content-bg); border: 1px solid var(--border);
       padding: 1.5em; position: relative;
     }
 
+    /* 通知・Ambox */
     .ambox {
       border: 1px solid var(--border-light); border-left: 10px solid var(--border);
-      padding: 12px; margin-bottom: 1.2em; display: flex; gap: 12px; font-size: 0.9rem;
+      padding: 12px; margin-bottom: 1.2em; display: flex; gap: 12px; font-size: 0.95rem;
     }
     .ambox-notice { border-left-color: var(--ooui-blue); background-color: #f8f9fa; }
     .ambox-success { border-left-color: var(--ambox-green); background-color: #f3fbf8; }
     .ambox-danger { border-left-color: var(--ambox-red); background-color: #fdf5f5; }
-    .ambox-title { font-weight: bold; display: block; margin-bottom: 4px; font-size: 1rem; }
+    .ambox-title { font-weight: bold; display: block; margin-bottom: 4px; font-size: 1.05rem; }
 
+    /* フォーム要素 */
     .mw-ui-input {
-      font-family: inherit; font-size: 0.95rem; border: 1px solid var(--border);
-      border-radius: 2px; padding: 7px 10px; outline: none; width: 100%; max-width: 100%;
+      font-family: inherit; font-size: 16px; /* スマホでのズーム防止 */
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 10px 12px; outline: none; width: 100%; max-width: 100%;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
     }
     .mw-ui-input:focus { border-color: var(--ooui-blue); box-shadow: inset 0 0 0 1px var(--ooui-blue); }
 
     .mw-ui-button {
-      font-size: 0.9rem; font-weight: bold; border-radius: 2px; padding: 7px 14px;
+      font-size: 0.95rem; font-weight: bold; border-radius: 4px; padding: 10px 16px;
       cursor: pointer; border: 1px solid var(--border); background-color: #f8f9fa; color: var(--text);
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.1s;
     }
     .mw-ui-button:hover:not(:disabled) { background-color: #fff; border-color: #72777d; }
     .mw-ui-button.progressive { background-color: var(--ooui-blue); border-color: var(--ooui-blue); color: #fff; }
     .mw-ui-button.progressive:hover:not(:disabled) { background-color: var(--ooui-blue-hover); }
     .mw-ui-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* メイン2カラムレイアウト */
+    /* メインレイアウト */
     .main-grid {
       display: flex; gap: 20px; align-items: flex-start; margin-top: 15px;
     }
-    .left-panel {
-      flex: 0 0 340px;
-      position: sticky; top: 15px;
-    }
-    .right-panel {
-      flex: 1; min-width: 0;
-    }
-
-    /* パネル系 */
-    .game-panel {
-      background: #f8f9fa; border: 1px solid var(--border-light);
-      padding: 12px; margin-bottom: 1em; border-radius: 2px;
-    }
-    .stats-row {
-      display: flex; justify-content: space-between; font-size: 0.85rem; margin-top: 10px; flex-wrap: wrap; gap: 8px;
-    }
-
-    .toc-box {
-      border: 1px solid var(--border); background: #f8f9fa; padding: 10px; border-radius: 2px;
-    }
-    .toc-title { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; margin-bottom: 8px; align-items: center;}
-    .toc-list { list-style: none; max-height: 400px; overflow-y: auto; padding-right: 5px; }
-    .toc-item { padding: 6px; font-size: 0.95rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer;}
-    .toc-item:hover { background: #fff; }
-    .toc-item.miss .toc-word { color: var(--text-muted); }
-
-    /* ヒートマップバッジ */
-    .toc-badge { font-size: 0.8rem; padding: 2px 8px; border-radius: 12px; font-weight: bold; min-width: 45px; text-align: center; }
-    .badge-miss { background: #eaecf0; color: #72777d; }
-    .badge-low { background: #e6f6ee; color: #007a50; border: 1px solid #bce8d2; }
-    .badge-mid { background: #bce8d2; color: #005a30; border: 1px solid #00af89; }
-    .badge-high { background: #fc3; color: #523b00; border: 1px solid #d4a700; }
-
-    /* 記事プレビューエリア */
+    
+    /* 記事プレビュー */
     .firstHeading {
       font-family: serif; font-size: 1.85rem; border-bottom: 1px solid var(--border);
-      padding-bottom: 4px; margin-bottom: 15px;
+      padding-bottom: 4px; margin-bottom: 15px; line-height: 1.3;
     }
     .article-preview {
       font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; padding-bottom: 40px;
       word-wrap: break-word; overflow-wrap: break-word;
     }
     
-    /* 黒塗り・ハイライト装飾 */
+    /* 黒塗り装飾 */
     .masked-block {
       background-color: #202122; color: transparent; border-radius: 2px; margin: 0 1px; user-select: none;
     }
@@ -147,33 +116,109 @@
       background-color: #eaf3ff; color: #0645ad; font-weight: bold; border-radius: 2px;
       animation: highlightFade 2s ease-out;
     }
-    @keyframes highlightFade {
-      0% { background-color: #ffe299; }
-      100% { background-color: #eaf3ff; }
-    }
+    @keyframes highlightFade { 0% { background-color: #ffe299; } 100% { background-color: #eaf3ff; } }
 
-    /* その他UIコンポーネント */
-    #loading-view { text-align: center; padding: 40px; color: var(--text-muted); }
-    .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid var(--border-light); border-top-color: var(--ooui-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px;}
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* トースト (上部に変更) */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px; border-radius: 8px;
+      z-index: 10001; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+      font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
 
     #confetti-canvas {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 9999; display: none;
-    }
-    .toast {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 4px;
-      z-index: 10000; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold;
-    }
-    .mode-box {
-      margin-bottom: 15px; padding: 10px; background: #fff; border: 1px solid var(--border-light); border-radius: 2px;
+      pointer-events: none; z-index: 10000; display: none;
     }
 
+    .mode-box {
+      margin-bottom: 15px; padding: 12px; background: #fff; border: 1px solid var(--border-light); border-radius: 4px;
+    }
+    
+    /* ヒートマップバッジ */
+    .toc-badge { font-size: 0.8rem; padding: 2px 8px; border-radius: 12px; font-weight: bold; min-width: 48px; text-align: center; }
+    .badge-miss { background: #eaecf0; color: #72777d; }
+    .badge-low { background: #e6f6ee; color: #007a50; border: 1px solid #bce8d2; }
+    .badge-mid { background: #bce8d2; color: #005a30; border: 1px solid #00af89; }
+    .badge-high { background: #fc3; color: #523b00; border: 1px solid #d4a700; }
+    .toc-item { padding: 8px 6px; font-size: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer;}
+    .toc-item:hover { background: #f8f9fa; }
+    .toc-item.miss .toc-word { color: var(--text-muted); }
+
+    #loading-view { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+    .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border-light); border-top-color: var(--ooui-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;}
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ====================================================
+       PC / タブレット用レイアウト (2カラム)
+       ==================================================== */
+    @media (min-width: 769px) {
+      .left-panel {
+        flex: 0 0 350px; position: sticky; top: 20px;
+        display: flex; flex-direction: column; gap: 15px;
+        max-height: calc(100vh - 40px);
+      }
+      .right-panel { flex: 1; min-width: 0; }
+      
+      .game-panel {
+        order: 1; background: #f8f9fa; border: 1px solid var(--border-light);
+        padding: 16px; border-radius: 4px;
+      }
+      .history-collapsible {
+        order: 2; display: block !important; flex: 1; min-height: 0;
+      }
+      .toc-box {
+        border: 1px solid var(--border); background: #f8f9fa; padding: 12px; border-radius: 4px;
+        display: flex; flex-direction: column; height: 100%;
+      }
+      .toc-list {
+        list-style: none; flex: 1; overflow-y: auto; padding-right: 5px;
+      }
+      .mobile-toggle-bar { display: none !important; }
+    }
+
+    /* ====================================================
+       スマートフォン用レイアウト (固定ボトムパネル)
+       ==================================================== */
     @media (max-width: 768px) {
-      .main-grid { flex-direction: column; }
-      .left-panel { position: static; width: 100%; }
-      .article-preview { font-size: 0.95rem; }
+      #content { padding: 1em; border: none; }
+      .firstHeading { font-size: 1.5rem; }
+      .main-grid { flex-direction: column; margin-top: 5px; gap: 10px; }
+      
+      .right-panel { width: 100%; padding-bottom: 160px; /* 下部パネルの高さ分余白を確保 */ }
+      .article-preview { font-size: 1rem; }
+
+      .left-panel {
+        position: fixed; bottom: 0; left: 0; width: 100%;
+        background: #ffffff; border-top: 1px solid var(--border);
+        z-index: 9999; box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        padding: 10px 15px 20px; /* セーフエリア考慮 */
+        display: flex; flex-direction: column; gap: 8px;
+        max-height: 85vh;
+      }
+
+      /* 1. 折りたたみ履歴 */
+      .history-collapsible {
+        order: 1; display: none; 
+        max-height: 45vh; overflow-y: auto;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 5px; padding-bottom: 5px;
+      }
+      .history-collapsible.open { display: block; }
+      .toc-box { border: none; padding: 0; background: transparent; }
+      .toc-list { list-style: none; }
+
+      /* 2. トグル＆操作バー */
+      .mobile-toggle-bar {
+        order: 2; display: flex; justify-content: space-between; align-items: center;
+      }
+
+      /* 3. 入力フォーム */
+      .game-panel {
+        order: 3; border: none; padding: 0; margin: 0; background: transparent;
+      }
+      
+      .desktop-only { display: none !important; }
     }
   </style>
 </head>
@@ -195,27 +240,26 @@
     <!-- セットアップ画面 -->
     <div id="setup-view">
       <div class="ambox ambox-notice">
-        <div style="font-size:1.5rem;">📚</div>
+        <div style="font-size:1.8rem; line-height:1;">📚</div>
         <div style="width: 100%;">
           <strong class="ambox-title">ゲーム設定 (全文版)</strong>
-          <p style="margin-bottom:10px;">Wikipediaの記事本文が黒塗りされています。単語を推測して送信し、徐々にアンマスクされる文脈から「記事のタイトル」を当ててください。</p>
+          <p style="margin-bottom:12px;">Wikipediaの記事本文が黒塗りされています。単語を推測して送信し、徐々にアンマスクされる文脈から「記事のタイトル」を当ててください。</p>
           
-          <!-- モード選択 -->
           <div class="mode-box">
-            <label style="font-weight:bold; display:block; margin-bottom:8px;">ゲームモードを選択:</label>
-            <label style="display:block; margin-bottom:6px; cursor:pointer;">
+            <label style="font-weight:bold; display:block; margin-bottom:10px;">ゲームモードを選択:</label>
+            <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
               <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()">
-              🌟 良質な記事モード (おすすめ・知名度高め)
+              🌟 良質な記事モード (おすすめ)
             </label>
-            <label style="display:block; cursor:pointer;">
+            <label style="display:block; cursor:pointer; font-size:1.05rem;">
               <input type="radio" name="game-mode" value="random" onchange="toggleMode()">
-              🎲 完全ランダムモード (ハード・激ムズ)
+              🎲 完全ランダムモード (激ムズ)
             </label>
           </div>
 
           <div id="category-wrapper" style="margin-bottom:15px; transition: opacity 0.2s;">
-            <label style="font-weight:bold; margin-right:8px;">カテゴリ (良質モード用):</label>
-            <select id="category-select" class="mw-ui-input" style="width:200px; display:inline-block;">
+            <label style="font-weight:bold; display:block; margin-bottom:6px;">カテゴリ (良質モード用):</label>
+            <select id="category-select" class="mw-ui-input" style="max-width:300px;">
               <option value="all">すべて (良質な記事)</option>
               <option value="history">歴史・事件</option>
               <option value="science">科学・自然・宇宙</option>
@@ -224,8 +268,8 @@
             </select>
           </div>
           
-          <div>
-            <button type="button" class="mw-ui-button progressive" onclick="startGame()">ゲームを開始</button>
+          <div style="margin-top:20px;">
+            <button type="button" class="mw-ui-button progressive" onclick="startGame()" style="width:100%; max-width:300px; padding:12px;">ゲームを開始</button>
           </div>
         </div>
       </div>
@@ -234,59 +278,74 @@
     <!-- ロード画面 -->
     <div id="loading-view" style="display:none;">
       <div class="spinner"></div>
-      <p id="loading-msg">Wikipediaから記事全文を取得しています...</p>
-      <p id="loading-submsg" style="font-size:0.8rem; color:#777;">(データ量が多いため数秒かかる場合があります)</p>
+      <p id="loading-msg" style="font-size:1.1rem; font-weight:bold;">Wikipediaから記事全文を取得しています...</p>
+      <p id="loading-submsg" style="font-size:0.9rem; margin-top:8px;">(データ量が多いため数秒かかる場合があります)</p>
     </div>
 
     <!-- ゲーム画面 -->
     <div id="game-view" style="display:none;">
       
-      <!-- 結果表示 (ambox) -->
+      <!-- 結果表示 -->
       <div id="result-ambox" class="ambox" style="display: none; flex-direction: column;">
-        <div style="display: flex; gap: 12px; align-items:flex-start;">
-          <div id="result-icon" style="font-size:1.8rem;">🎉</div>
+        <div style="display: flex; gap: 15px; align-items:flex-start;">
+          <div id="result-icon" style="font-size:2rem; line-height:1;">🎉</div>
           <div style="flex: 1;">
-            <strong class="ambox-title" id="result-title">正解です！</strong>
+            <strong class="ambox-title" id="result-title" style="font-size:1.2rem;">正解です！</strong>
             <p id="result-desc"></p>
-            <div style="margin-top: 10px; display:flex; gap:10px;">
-              <button class="mw-ui-button progressive" onclick="location.reload()">次の記事で遊ぶ</button>
-              <button class="mw-ui-button" onclick="shareResult()">📋 結果をシェア</button>
-              <a id="result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">Wikipediaで読む ↗</a>
+            <div style="margin-top: 15px; display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="mw-ui-button progressive" onclick="location.reload()">次の記事へ</button>
+              <button class="mw-ui-button" onclick="shareResult()">📋 シェア</button>
+              <a id="result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">Wikipedia ↗</a>
             </div>
           </div>
         </div>
       </div>
 
       <div class="main-grid">
-        <!-- 左カラム: 操作パネル -->
+        <!-- 操作・履歴パネル (PC: 左カラム, スマホ: 画面下部固定) -->
         <div class="left-panel">
-          <div class="game-panel">
-            <form id="guess-form" onsubmit="handleGuess(event)" style="display:flex; gap:8px;">
-              <input type="text" class="mw-ui-input" id="word-input" placeholder="単語を入力..." required autocomplete="off">
-              <button type="submit" class="mw-ui-button progressive" id="submit-btn">送信</button>
-            </form>
-            <div class="stats-row">
-              <span>試行: <strong id="guess-count">0</strong>回 <span id="hit-rate"></span></span>
-              <button type="button" class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:4px 8px; font-size:0.8rem;">💡 ヒント(3)</button>
+          
+          <!-- スマホ用トグルバー -->
+          <div class="mobile-toggle-bar">
+            <button class="mw-ui-button" id="history-toggle-btn" onclick="toggleHistory()" style="background:transparent; border:none; padding:4px 0; box-shadow:none; font-weight:bold; color:var(--link);">📋 履歴 (0件) <span style="font-size:0.8em;">▼</span></button>
+            <div style="display:flex; gap:8px;">
+              <button class="mw-ui-button" id="hint-btn-mobile" onclick="useHint()" style="padding:6px 10px;">💡(3)</button>
+              <button class="mw-ui-button" onclick="giveUp()" style="padding:6px 10px; color:var(--ambox-red);">🏳️</button>
             </div>
           </div>
 
-          <div class="toc-box">
-            <div class="toc-title">
-              <span>質問履歴</span>
-              <select id="sort-select" class="mw-ui-input" style="width: auto; padding: 2px 6px; font-size:0.8rem;" onchange="renderHistory()">
-                <option value="new">新着順</option>
-                <option value="count">出現回数順</option>
-              </select>
+          <!-- 履歴リストエリア -->
+          <div class="history-collapsible" id="history-container">
+            <div class="toc-box">
+              <div class="toc-title">
+                <span>質問履歴 <span id="hit-rate-pc" class="desktop-only"></span></span>
+                <select id="sort-select" class="mw-ui-input" style="width: auto; padding: 4px 8px; font-size:0.9rem;" onchange="renderHistory()">
+                  <option value="new">新着順</option>
+                  <option value="count">回数順</option>
+                </select>
+              </div>
+              <ul class="toc-list" id="history-list"></ul>
             </div>
-            <ul class="toc-list" id="history-list"></ul>
-            <div style="margin-top:10px; text-align:right;">
-              <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="font-size:0.8rem; color:var(--ambox-red);">🏳️ ギブアップ</button>
+          </div>
+
+          <!-- 入力フォームエリア -->
+          <div class="game-panel">
+            <div class="stats-row desktop-only" style="margin-bottom:12px; font-size:0.9rem;">
+              <span>試行: <strong id="guess-count">0</strong>回</span>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:6px 12px;">💡 ヒント(3)</button>
+                <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="padding:6px 12px; color:var(--ambox-red);">🏳️ ギブアップ</button>
+              </div>
             </div>
+            
+            <form id="guess-form" onsubmit="handleGuess(event)" style="display:flex; gap:8px;">
+              <input type="text" class="mw-ui-input" id="word-input" placeholder="単語を入力..." required autocomplete="off">
+              <button type="submit" class="mw-ui-button progressive" id="submit-btn" style="min-width:70px;">送信</button>
+            </form>
           </div>
         </div>
 
-        <!-- 右カラム: 記事プレビュー -->
+        <!-- 記事プレビューエリア -->
         <div class="right-panel">
           <h1 class="firstHeading" id="article-heading">【 ■ ■ ■ 】</h1>
           <div id="article-preview" class="article-preview"></div>
@@ -304,20 +363,43 @@
     let isGameOver = false;
     let currentTurn = 0;
     
-    // 黒塗り管理 (文字ごとの解禁ターン記録, 0=未解禁)
+    // 黒塗り管理
     let charRevealed; 
 
-    // オーディオ設定
+    // スマホ履歴トグル状態
+    let isHistoryOpen = false;
+
+    // オーディオ
     let audioCtx = null;
     let isMuted = false;
 
-    // --- モード切替のUI制御 ---
+    // --- UIトグル・制御 ---
     function toggleMode() {
       const isRandom = document.querySelector('input[name="game-mode"]:checked').value === 'random';
       const catSelect = document.getElementById('category-select');
       const catWrapper = document.getElementById('category-wrapper');
       catSelect.disabled = isRandom;
       catWrapper.style.opacity = isRandom ? '0.4' : '1';
+    }
+
+    function toggleHistory() {
+      isHistoryOpen = !isHistoryOpen;
+      const container = document.getElementById('history-container');
+      if (isHistoryOpen) {
+        container.classList.add('open');
+      } else {
+        container.classList.remove('open');
+      }
+      updateHistoryButton();
+    }
+
+    function updateHistoryButton() {
+      const btn = document.getElementById('history-toggle-btn');
+      if (isHistoryOpen) {
+        btn.innerHTML = `📋 履歴 (${attempts.length}件) <span style="font-size:0.8em;">▲</span>`;
+      } else {
+        btn.innerHTML = `📋 履歴 (${attempts.length}件) <span style="font-size:0.8em;">▼</span>`;
+      }
     }
 
     // --- 2. Web Audio API 音声生成 ---
@@ -357,7 +439,7 @@
       setTimeout(() => playTone(293.66, 'triangle', 0.6, 0.2), 400);
     }
 
-    // --- 3. テキスト正規化 (カタカナ・全角を統一) ---
+    // --- 3. テキスト正規化 ---
     function normalizeChar(char) {
       let c = char.toLowerCase();
       if (/[Ａ-Ｚａ-ｚ０-９]/.test(c)) c = String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
@@ -373,42 +455,30 @@
       return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
     }
 
-    // --- 4. Wikipedia API 取得 (全文取得 & モード分岐) ---
+    // --- 4. Wikipedia API 取得 ---
     async function fetchArticle(mode, categoryType) {
-      // ▼ 完全ランダムモード
       if (mode === 'random') {
         for (let attempt = 0; attempt < 10; attempt++) {
           try {
-            // 一度に10件取得して走査する
             const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=10&prop=extracts&explaintext=1&origin=*&format=json`;
             const res = await fetch(endpoint);
             const data = await res.json();
-            
             if (data && data.query && data.query.pages) {
               let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
               for (const p of pages) {
-                // 500文字未満のスタブ、曖昧さ回避、一覧記事を弾く
                 if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避') || p.title.includes('一覧')) continue;
-                
                 const clean = p.title.replace(/\s*\(.*?\)$/, '');
                 return {
-                  title: p.title,
-                  cleanTitle: clean,
-                  extract: p.extract,
-                  normalizedExtract: normalizeText(p.extract),
-                  normalizedCleanTitle: normalizeText(clean),
-                  url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
-                  modeName: '🎲 完全ランダム'
+                  title: p.title, cleanTitle: clean, extract: p.extract,
+                  normalizedExtract: normalizeText(p.extract), normalizedCleanTitle: normalizeText(clean),
+                  url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`, modeName: '🎲 完全ランダム'
                 };
               }
             }
           } catch(e) { console.error(e); }
         }
-        // 万が一見つからなかった場合は良質な記事にフォールバック
         return fetchArticle('quality', 'all');
-      } 
-      // ▼ 良質な記事モード (通常)
-      else {
+      } else {
         const cats = {
           'all': ['Category:良質な記事'],
           'history': ['歴史', '時代', '事件', '戦争', '史'],
@@ -423,7 +493,6 @@
           try {
             const randChar = chars[Math.floor(Math.random() * chars.length)];
             const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=Category:良質な記事&gcmnamespace=0&gcmlimit=50&gcmstartsortkeyprefix=${encodeURIComponent(randChar)}&prop=extracts|categories&explaintext=1&cllimit=max&origin=*&format=json`;
-            
             const res = await fetch(endpoint);
             const data = await res.json();
             
@@ -431,25 +500,19 @@
               let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
               for (const p of pages) {
                 if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避')) continue;
-                
                 let match = (categoryType === 'all');
                 if (!match && p.categories) {
                   const catStr = p.categories.map(c => c.title).join(' ');
                   match = targets.some(kw => catStr.includes(kw));
                 }
-                
                 if (match) {
                   const clean = p.title.replace(/\s*\(.*?\)$/, '');
                   const sel = document.getElementById('category-select');
                   const catName = sel.options[sel.selectedIndex].text;
                   return {
-                    title: p.title,
-                    cleanTitle: clean,
-                    extract: p.extract,
-                    normalizedExtract: normalizeText(p.extract),
-                    normalizedCleanTitle: normalizeText(clean),
-                    url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
-                    modeName: `🌟 良質な記事 (${catName})`
+                    title: p.title, cleanTitle: clean, extract: p.extract,
+                    normalizedExtract: normalizeText(p.extract), normalizedCleanTitle: normalizeText(clean),
+                    url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`, modeName: `🌟 良質な記事 (${catName})`
                   };
                 }
               }
@@ -465,7 +528,6 @@
       const mode = document.querySelector('input[name="game-mode"]:checked').value;
       const cat = document.getElementById('category-select').value;
       
-      // ローディングメッセージの動的変更
       if (mode === 'random') {
         document.getElementById('loading-msg').textContent = '完全ランダム記事を探しています...';
         document.getElementById('loading-submsg').textContent = '(※非常にマニアックなお題が出る場合があります)';
@@ -478,7 +540,6 @@
       document.getElementById('loading-view').style.display = 'block';
 
       currentArticle = await fetchArticle(mode, cat);
-      // 記事全文の文字数に合わせて動的にマスク配列を確保
       charRevealed = new Uint16Array(currentArticle.extract.length);
       
       document.getElementById('loading-view').style.display = 'none';
@@ -500,10 +561,9 @@
       
       if (normWord.length < 1) return;
 
-      // 1文字ゴリ押し防止バリデーション (サロゲートペア等も考慮)
+      // 1文字ゴリ押し防止バリデーション
       const charArray = Array.from(rawWord);
       if (charArray.length === 1) {
-        // 漢字（Hanスクリプト）または「々」以外は弾く
         if (!/^[\p{Script=Han}々]$/u.test(rawWord)) {
           showToast('ひらがな・カタカナ・英数字は2文字以上で入力してください');
           inputElem.value = '';
@@ -520,18 +580,13 @@
 
       currentTurn++;
       let count = 0;
-      
-      // indexOf を使用した高速検索アルゴリズム
       const text = currentArticle.normalizedExtract;
       const len = normWord.length;
       let startIndex = 0;
 
       while ((startIndex = text.indexOf(normWord, startIndex)) !== -1) {
         count++;
-        // ヒットした文字のインデックスを現在のターン数でマーキング
-        for (let j = 0; j < len; j++) {
-          charRevealed[startIndex + j] = currentTurn;
-        }
+        for (let j = 0; j < len; j++) charRevealed[startIndex + j] = currentTurn;
         startIndex += 1;
       }
 
@@ -539,7 +594,6 @@
       attempts.unshift({ word: rawWord, norm: normWord, count, hit: count > 0, turn: currentTurn, isCorrect });
       
       inputElem.value = '';
-      
       if (count > 0) playHit(count); else playMiss();
       
       updateUI();
@@ -555,20 +609,30 @@
       
       const hints = [
         `タイトルは ${currentArticle.cleanTitle.length} 文字です。`,
-        `タイトルの最初の文字は「 ${currentArticle.cleanTitle[0]} 」です。`,
-        `タイトルの最後の文字は「 ${currentArticle.cleanTitle[currentArticle.cleanTitle.length-1]} 」です。`
+        `最初の文字は「 ${currentArticle.cleanTitle[0]} 」です。`,
+        `最後の文字は「 ${currentArticle.cleanTitle[currentArticle.cleanTitle.length-1]} 」です。`
       ];
       
-      showToast(`ヒント ${hintsUsed}/3: ${hints[hintsUsed-1]}`);
-      document.getElementById('hint-btn').textContent = `💡 ヒント(${MAX_HINTS - hintsUsed})`;
-      if (hintsUsed >= MAX_HINTS) document.getElementById('hint-btn').disabled = true;
+      showToast(`💡 ヒント ${hintsUsed}/3\n${hints[hintsUsed-1]}`);
+      
+      const remain = MAX_HINTS - hintsUsed;
+      document.getElementById('hint-btn').innerHTML = `💡 ヒント(${remain})`;
+      document.getElementById('hint-btn-mobile').innerHTML = `💡(${remain})`;
+      
+      if (hintsUsed >= MAX_HINTS) {
+        document.getElementById('hint-btn').disabled = true;
+        document.getElementById('hint-btn-mobile').disabled = true;
+      }
     }
 
-    // --- 6. UI & 描画更新 ---
+    // --- 6. UI 更新 ---
     function updateUI() {
       document.getElementById('guess-count').textContent = attempts.length;
       const hits = attempts.filter(a => a.hit).length;
-      document.getElementById('hit-rate').textContent = `(ヒット率: ${Math.round((hits/attempts.length)*100)}%)`;
+      const rate = Math.round((hits / attempts.length) * 100) || 0;
+      document.getElementById('hit-rate-pc').textContent = `(ヒット率: ${rate}%)`;
+      
+      updateHistoryButton();
       renderHistory();
       
       const latestItem = attempts[0];
@@ -598,7 +662,6 @@
     function updateArticlePreview(latestTurn) {
       const html = [];
       const text = currentArticle.extract;
-      
       const maskRegex = /[\p{L}\p{N}々〆]/u;
       let addedLatestId = false;
 
@@ -614,10 +677,7 @@
           if (charRevealed[i] > 0 && maskRegex.test(text[i])) {
             const isLatest = (charRevealed[i] === latestTurn);
             let idStr = '';
-            if (isLatest && !addedLatestId) {
-              idStr = ' id="latest-hit"';
-              addedLatestId = true;
-            }
+            if (isLatest && !addedLatestId) { idStr = ' id="latest-hit"'; addedLatestId = true; }
             html.push(`<span class="${isLatest ? 'revealed-latest' : 'revealed'}"${idStr}>${escapeHtml(text[i])}</span>`);
           } else {
             html.push(escapeHtml(text[i]));
@@ -633,7 +693,6 @@
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // --- 7. 数値カウントアニメーション ---
     function animateValue(obj, start, end, duration) {
       let startTimestamp = null;
       const step = (timestamp) => {
@@ -645,7 +704,7 @@
       window.requestAnimationFrame(step);
     }
 
-    // --- 8. ゲーム終了処理 ---
+    // --- 8. ゲーム終了 ---
     function giveUp() {
       if (isGameOver) return;
       if (!confirm('ギブアップして答えを見ますか？')) return;
@@ -654,9 +713,11 @@
 
     function endGame(isClear) {
       isGameOver = true;
+      document.getElementById('word-input').blur(); // キーボード閉じる
       document.getElementById('word-input').disabled = true;
       document.getElementById('submit-btn').disabled = true;
       document.getElementById('hint-btn').disabled = true;
+      document.getElementById('hint-btn-mobile').disabled = true;
       document.getElementById('giveup-btn').disabled = true;
       
       document.getElementById('article-heading').textContent = currentArticle.title;
@@ -667,9 +728,7 @@
       document.getElementById('result-icon').textContent = isClear ? '🎉' : '🏳️';
       document.getElementById('result-title').textContent = isClear ? '見事正解です！' : 'ギブアップしました。';
       
-      // 結果にモードを明記
-      document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${escapeHtml(currentArticle.modeName)}</span>`;
-      
+      document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.9rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${escapeHtml(currentArticle.modeName)}</span>`;
       document.getElementById('result-link').href = currentArticle.url;
       ambox.style.display = 'flex';
 
@@ -677,30 +736,29 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // --- 9. SNSシェア機能 ---
+    // --- 9. 通知 & SNS ---
     function shareResult() {
       const hitCount = attempts.filter(a => a.hit).length;
       const rate = Math.round((hitCount / attempts.length) * 100) || 0;
-      
       let emj = '';
       for (let i = 0; i < Math.min(attempts.length, 6); i++) {
         emj += attempts[i].isCorrect ? '🟩' : (attempts[i].hit ? '🟨' : '⬛');
       }
-      
-      // シェアテキストにモードを明記
       const text = `📚 Wikipedia推測ゲーム\n🧩 モード: ${currentArticle.modeName}\n🎯 試行: ${attempts.length}回 (ヒット率: ${rate}%)\n💡 ヒント: ${hintsUsed}/${MAX_HINTS}\n${emj} ${attempts[0].isCorrect ? '🎉 正解！' : '🏳️ ギブアップ'}\n#WikiGuess`;
       
       navigator.clipboard.writeText(text).then(() => showToast('結果をクリップボードにコピーしました！'));
     }
 
+    let toastTimeout;
     function showToast(msg) {
       const toast = document.getElementById('toast');
-      toast.textContent = msg;
+      toast.innerText = msg; // 改行も反映
       toast.style.opacity = 1;
-      setTimeout(() => toast.style.opacity = 0, 3000);
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => toast.style.opacity = 0, 3500);
     }
 
-    // --- 10. 紙吹雪パーティクル ---
+    // --- 10. 紙吹雪 ---
     let particles = [], confettiFrame;
     function startConfetti() {
       const cvs = document.getElementById('confetti-canvas');
