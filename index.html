@@ -179,7 +179,7 @@
 </head>
 <body>
   <canvas id="confetti-canvas"></canvas>
-  <div id="toast" class="toast">クリップボードにコピーしました！</div>
+  <div id="toast" class="toast"></div>
 
   <header id="mw-header">
     <a href="#" onclick="location.reload()" class="wiki-logo">
@@ -499,6 +499,19 @@
       const normWord = normalizeText(rawWord);
       
       if (normWord.length < 1) return;
+
+      // 1文字ゴリ押し防止バリデーション (サロゲートペア等も考慮)
+      const charArray = Array.from(rawWord);
+      if (charArray.length === 1) {
+        // 漢字（Hanスクリプト）または「々」以外は弾く
+        if (!/^[\p{Script=Han}々]$/u.test(rawWord)) {
+          showToast('ひらがな・カタカナ・英数字は2文字以上で入力してください');
+          inputElem.value = '';
+          inputElem.focus();
+          return;
+        }
+      }
+
       if (attempts.some(a => a.norm === normWord)) {
         showToast('すでに質問済みです');
         inputElem.value = '';
