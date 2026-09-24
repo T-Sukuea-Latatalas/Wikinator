@@ -166,6 +166,9 @@
       background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 4px;
       z-index: 10000; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold;
     }
+    .mode-box {
+      margin-bottom: 15px; padding: 10px; background: #fff; border: 1px solid var(--border-light); border-radius: 2px;
+    }
 
     @media (max-width: 768px) {
       .main-grid { flex-direction: column; }
@@ -193,18 +196,35 @@
     <div id="setup-view">
       <div class="ambox ambox-notice">
         <div style="font-size:1.5rem;">📚</div>
-        <div>
+        <div style="width: 100%;">
           <strong class="ambox-title">ゲーム設定 (全文版)</strong>
           <p style="margin-bottom:10px;">Wikipediaの記事本文が黒塗りされています。単語を推測して送信し、徐々にアンマスクされる文脈から「記事のタイトル」を当ててください。</p>
-          <label style="font-weight:bold; margin-right:8px;">カテゴリ:</label>
-          <select id="category-select" class="mw-ui-input" style="width:200px; display:inline-block;">
-            <option value="all">すべて (良質な記事)</option>
-            <option value="history">歴史・事件</option>
-            <option value="science">科学・自然・宇宙</option>
-            <option value="geo">地理・国・都市</option>
-            <option value="culture">人物・文化・芸術</option>
-          </select>
-          <div style="margin-top:15px;">
+          
+          <!-- モード選択 -->
+          <div class="mode-box">
+            <label style="font-weight:bold; display:block; margin-bottom:8px;">ゲームモードを選択:</label>
+            <label style="display:block; margin-bottom:6px; cursor:pointer;">
+              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()">
+              🌟 良質な記事モード (おすすめ・知名度高め)
+            </label>
+            <label style="display:block; cursor:pointer;">
+              <input type="radio" name="game-mode" value="random" onchange="toggleMode()">
+              🎲 完全ランダムモード (ハード・激ムズ)
+            </label>
+          </div>
+
+          <div id="category-wrapper" style="margin-bottom:15px; transition: opacity 0.2s;">
+            <label style="font-weight:bold; margin-right:8px;">カテゴリ (良質モード用):</label>
+            <select id="category-select" class="mw-ui-input" style="width:200px; display:inline-block;">
+              <option value="all">すべて (良質な記事)</option>
+              <option value="history">歴史・事件</option>
+              <option value="science">科学・自然・宇宙</option>
+              <option value="geo">地理・国・都市</option>
+              <option value="culture">人物・文化・芸術</option>
+            </select>
+          </div>
+          
+          <div>
             <button type="button" class="mw-ui-button progressive" onclick="startGame()">ゲームを開始</button>
           </div>
         </div>
@@ -214,7 +234,8 @@
     <!-- ロード画面 -->
     <div id="loading-view" style="display:none;">
       <div class="spinner"></div>
-      <p>Wikipediaから記事全文を取得しています...<br><span style="font-size:0.8rem; color:#777;">(データ量が多いため数秒かかる場合があります)</span></p>
+      <p id="loading-msg">Wikipediaから記事全文を取得しています...</p>
+      <p id="loading-submsg" style="font-size:0.8rem; color:#777;">(データ量が多いため数秒かかる場合があります)</p>
     </div>
 
     <!-- ゲーム画面 -->
@@ -290,6 +311,15 @@
     let audioCtx = null;
     let isMuted = false;
 
+    // --- モード切替のUI制御 ---
+    function toggleMode() {
+      const isRandom = document.querySelector('input[name="game-mode"]:checked').value === 'random';
+      const catSelect = document.getElementById('category-select');
+      const catWrapper = document.getElementById('category-wrapper');
+      catSelect.disabled = isRandom;
+      catWrapper.style.opacity = isRandom ? '0.4' : '1';
+    }
+
     // --- 2. Web Audio API 音声生成 ---
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -343,65 +373,111 @@
       return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
     }
 
-    // --- 4. Wikipedia API 取得 (全文取得版) ---
-    async function fetchArticle(categoryType) {
-      const cats = {
-        'all': ['Category:良質な記事'],
-        'history': ['歴史', '時代', '事件', '戦争', '史'],
-        'science': ['科学', '物理', '化学', '生物', '宇宙', '自然', '医学', '工学'],
-        'geo': ['地理', '国', '都市', '地形', '交通', '地域', '山'],
-        'culture': ['人物', '文化', '芸術', '音楽', '美術', '宗教', '文学']
-      };
-      const targets = cats[categoryType];
-      const chars = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-      for (let attempt = 0; attempt < 10; attempt++) {
-        try {
-          const randChar = chars[Math.floor(Math.random() * chars.length)];
-          // exintroを外し、全文をプレーンテキストで取得する
-          const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=Category:良質な記事&gcmnamespace=0&gcmlimit=50&gcmstartsortkeyprefix=${encodeURIComponent(randChar)}&prop=extracts|categories&explaintext=1&cllimit=max&origin=*&format=json`;
-          
-          const res = await fetch(endpoint);
-          const data = await res.json();
-          
-          if (data && data.query && data.query.pages) {
-            let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
+    // --- 4. Wikipedia API 取得 (全文取得 & モード分岐) ---
+    async function fetchArticle(mode, categoryType) {
+      // ▼ 完全ランダムモード
+      if (mode === 'random') {
+        for (let attempt = 0; attempt < 10; attempt++) {
+          try {
+            // 一度に10件取得して走査する
+            const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=10&prop=extracts&explaintext=1&origin=*&format=json`;
+            const res = await fetch(endpoint);
+            const data = await res.json();
             
-            for (const p of pages) {
-              if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避')) continue;
-              
-              let match = (categoryType === 'all');
-              if (!match && p.categories) {
-                const catStr = p.categories.map(c => c.title).join(' ');
-                match = targets.some(kw => catStr.includes(kw));
-              }
-              
-              if (match) {
+            if (data && data.query && data.query.pages) {
+              let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
+              for (const p of pages) {
+                // 500文字未満のスタブ、曖昧さ回避、一覧記事を弾く
+                if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避') || p.title.includes('一覧')) continue;
+                
                 const clean = p.title.replace(/\s*\(.*?\)$/, '');
                 return {
                   title: p.title,
                   cleanTitle: clean,
-                  extract: p.extract, // 全文をカットせずに格納
-                  normalizedExtract: normalizeText(p.extract), // 全文を正規化
+                  extract: p.extract,
+                  normalizedExtract: normalizeText(p.extract),
                   normalizedCleanTitle: normalizeText(clean),
-                  url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`
+                  url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
+                  modeName: '🎲 完全ランダム'
                 };
               }
             }
-          }
-        } catch(e) { console.error(e); }
+          } catch(e) { console.error(e); }
+        }
+        // 万が一見つからなかった場合は良質な記事にフォールバック
+        return fetchArticle('quality', 'all');
+      } 
+      // ▼ 良質な記事モード (通常)
+      else {
+        const cats = {
+          'all': ['Category:良質な記事'],
+          'history': ['歴史', '時代', '事件', '戦争', '史'],
+          'science': ['科学', '物理', '化学', '生物', '宇宙', '自然', '医学', '工学'],
+          'geo': ['地理', '国', '都市', '地形', '交通', '地域', '山'],
+          'culture': ['人物', '文化', '芸術', '音楽', '美術', '宗教', '文学']
+        };
+        const targets = cats[categoryType];
+        const chars = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        for (let attempt = 0; attempt < 10; attempt++) {
+          try {
+            const randChar = chars[Math.floor(Math.random() * chars.length)];
+            const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=Category:良質な記事&gcmnamespace=0&gcmlimit=50&gcmstartsortkeyprefix=${encodeURIComponent(randChar)}&prop=extracts|categories&explaintext=1&cllimit=max&origin=*&format=json`;
+            
+            const res = await fetch(endpoint);
+            const data = await res.json();
+            
+            if (data && data.query && data.query.pages) {
+              let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
+              for (const p of pages) {
+                if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避')) continue;
+                
+                let match = (categoryType === 'all');
+                if (!match && p.categories) {
+                  const catStr = p.categories.map(c => c.title).join(' ');
+                  match = targets.some(kw => catStr.includes(kw));
+                }
+                
+                if (match) {
+                  const clean = p.title.replace(/\s*\(.*?\)$/, '');
+                  const sel = document.getElementById('category-select');
+                  const catName = sel.options[sel.selectedIndex].text;
+                  return {
+                    title: p.title,
+                    cleanTitle: clean,
+                    extract: p.extract,
+                    normalizedExtract: normalizeText(p.extract),
+                    normalizedCleanTitle: normalizeText(clean),
+                    url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
+                    modeName: `🌟 良質な記事 (${catName})`
+                  };
+                }
+              }
+            }
+          } catch(e) { console.error(e); }
+        }
+        return fetchArticle('quality', 'all');
       }
-      return fetchArticle('all');
     }
 
     async function startGame() {
       initAudio();
+      const mode = document.querySelector('input[name="game-mode"]:checked').value;
       const cat = document.getElementById('category-select').value;
       
+      // ローディングメッセージの動的変更
+      if (mode === 'random') {
+        document.getElementById('loading-msg').textContent = '完全ランダム記事を探しています...';
+        document.getElementById('loading-submsg').textContent = '(※非常にマニアックなお題が出る場合があります)';
+      } else {
+        document.getElementById('loading-msg').textContent = 'Wikipediaから記事全文を取得しています...';
+        document.getElementById('loading-submsg').textContent = '(データ量が多いため数秒かかる場合があります)';
+      }
+
       document.getElementById('setup-view').style.display = 'none';
       document.getElementById('loading-view').style.display = 'block';
 
-      currentArticle = await fetchArticle(cat);
+      currentArticle = await fetchArticle(mode, cat);
       // 記事全文の文字数に合わせて動的にマスク配列を確保
       charRevealed = new Uint16Array(currentArticle.extract.length);
       
@@ -432,7 +508,7 @@
       currentTurn++;
       let count = 0;
       
-      // indexOf を使用した高速検索アルゴリズム (長文でも瞬時に処理)
+      // indexOf を使用した高速検索アルゴリズム
       const text = currentArticle.normalizedExtract;
       const len = normWord.length;
       let startIndex = 0;
@@ -443,7 +519,7 @@
         for (let j = 0; j < len; j++) {
           charRevealed[startIndex + j] = currentTurn;
         }
-        startIndex += 1; // 重なりを許容して1文字ずつ進める
+        startIndex += 1;
       }
 
       const isCorrect = (normWord === currentArticle.normalizedCleanTitle || rawWord === currentArticle.title);
@@ -475,7 +551,7 @@
       if (hintsUsed >= MAX_HINTS) document.getElementById('hint-btn').disabled = true;
     }
 
-    // --- 6. UI & 描画更新 (パフォーマンス最適化) ---
+    // --- 6. UI & 描画更新 ---
     function updateUI() {
       document.getElementById('guess-count').textContent = attempts.length;
       const hits = attempts.filter(a => a.hit).length;
@@ -507,11 +583,9 @@
     }
 
     function updateArticlePreview(latestTurn) {
-      // 大量テキストのため、配列 push & join 方式でDOM構築を高速化
       const html = [];
       const text = currentArticle.extract;
       
-      // Unicodeプロパティを使用し、世界中の文字・漢字を正しくマスク対象とする（記号や句読点は除外）
       const maskRegex = /[\p{L}\p{N}々〆]/u;
       let addedLatestId = false;
 
@@ -520,16 +594,13 @@
         
         if (maskRegex.test(text[i]) && charRevealed[i] === 0 && !isGameOver) {
           let j = i;
-          while (j < text.length && maskRegex.test(text[j]) && charRevealed[j] === 0 && !isGameOver) {
-            j++;
-          }
+          while (j < text.length && maskRegex.test(text[j]) && charRevealed[j] === 0 && !isGameOver) j++;
           html.push(`<span class="masked-block">${'█'.repeat(j - i)}</span>`);
           i = j - 1;
         } else {
           if (charRevealed[i] > 0 && maskRegex.test(text[i])) {
             const isLatest = (charRevealed[i] === latestTurn);
             let idStr = '';
-            // 重複を防ぐため最初の1回のみIDを付与
             if (isLatest && !addedLatestId) {
               idStr = ' id="latest-hit"';
               addedLatestId = true;
@@ -582,7 +653,10 @@
       ambox.className = `ambox ${isClear ? 'ambox-success' : 'ambox-danger'}`;
       document.getElementById('result-icon').textContent = isClear ? '🎉' : '🏳️';
       document.getElementById('result-title').textContent = isClear ? '見事正解です！' : 'ギブアップしました。';
-      document.getElementById('result-desc').textContent = `正解の記事は「${currentArticle.title}」でした。`;
+      
+      // 結果にモードを明記
+      document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${escapeHtml(currentArticle.modeName)}</span>`;
+      
       document.getElementById('result-link').href = currentArticle.url;
       ambox.style.display = 'flex';
 
@@ -592,8 +666,6 @@
 
     // --- 9. SNSシェア機能 ---
     function shareResult() {
-      const sel = document.getElementById('category-select');
-      const catName = sel.options[sel.selectedIndex].text;
       const hitCount = attempts.filter(a => a.hit).length;
       const rate = Math.round((hitCount / attempts.length) * 100) || 0;
       
@@ -602,7 +674,8 @@
         emj += attempts[i].isCorrect ? '🟩' : (attempts[i].hit ? '🟨' : '⬛');
       }
       
-      const text = `📚 Wikipedia推測ゲーム (${catName})\n🎯 試行: ${attempts.length}回 (ヒット率: ${rate}%)\n💡 ヒント: ${hintsUsed}/${MAX_HINTS}\n${emj} ${attempts[0].isCorrect ? '🎉 正解！' : '🏳️ ギブアップ'}\n#WikiGuess`;
+      // シェアテキストにモードを明記
+      const text = `📚 Wikipedia推測ゲーム\n🧩 モード: ${currentArticle.modeName}\n🎯 試行: ${attempts.length}回 (ヒット率: ${rate}%)\n💡 ヒント: ${hintsUsed}/${MAX_HINTS}\n${emj} ${attempts[0].isCorrect ? '🎉 正解！' : '🏳️ ギブアップ'}\n#WikiGuess`;
       
       navigator.clipboard.writeText(text).then(() => showToast('結果をクリップボードにコピーしました！'));
     }
