@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>推測ゲーム - ウィキペディア (レスポンシブ・全文版)</title>
+  <title>Wikinator (ウィキネイター) - Wikipedia推測ゲーム</title>
   <style>
     :root {
       --wiki-bg: #f6f6f6;
@@ -27,22 +27,17 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
       font-size: 14px;
       line-height: 1.6;
+      padding-bottom: 55vh; /* 下部固定パネル用の余白 */
     }
 
     /* ヘッダー */
     #mw-header {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 12px 1em 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      max-width: 1000px; margin: 0 auto; padding: 12px 1em 8px;
+      display: flex; align-items: center; justify-content: space-between;
     }
-    .wiki-logo {
-      display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
-    }
+    .wiki-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
     .wiki-logo-icon {
-      width: 32px; height: 32px; background: #000; color: #fff;
+      width: 34px; height: 34px; background: #000; color: #fff;
       font-family: serif; font-size: 24px; font-weight: bold;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
     }
@@ -50,17 +45,13 @@
     .wiki-logo-text span { font-size: 0.75rem; color: var(--text-muted); }
 
     .header-actions { display: flex; align-items: center; gap: 15px; }
-    .icon-btn {
-      background: none; border: none; font-size: 1.4rem; cursor: pointer;
-      opacity: 0.8; transition: opacity 0.2s;
-    }
+    .icon-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; opacity: 0.8; transition: 0.2s; }
     .icon-btn:hover { opacity: 1; }
 
     /* メインコンテナ */
     #content {
-      max-width: 1100px; margin: 0 auto;
-      background: var(--content-bg); border: 1px solid var(--border);
-      padding: 1.5em; position: relative;
+      max-width: 1000px; margin: 0 auto; background: var(--content-bg);
+      border: 1px solid var(--border); padding: 1.5em; position: relative;
     }
 
     /* 通知・Ambox */
@@ -75,10 +66,8 @@
 
     /* フォーム要素 */
     .mw-ui-input {
-      font-family: inherit; font-size: 16px; /* スマホでのズーム防止 */
-      border: 1px solid var(--border); border-radius: 4px;
+      font-family: inherit; font-size: 16px; border: 1px solid var(--border); border-radius: 4px;
       padding: 10px 12px; outline: none; width: 100%; max-width: 100%;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
     }
     .mw-ui-input:focus { border-color: var(--ooui-blue); box-shadow: inset 0 0 0 1px var(--ooui-blue); }
 
@@ -92,133 +81,84 @@
     .mw-ui-button.progressive:hover:not(:disabled) { background-color: var(--ooui-blue-hover); }
     .mw-ui-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* メインレイアウト */
-    .main-grid {
-      display: flex; gap: 20px; align-items: flex-start; margin-top: 15px;
-    }
-    
     /* 記事プレビュー */
     .firstHeading {
       font-family: serif; font-size: 1.85rem; border-bottom: 1px solid var(--border);
-      padding-bottom: 4px; margin-bottom: 15px; line-height: 1.3;
+      padding-bottom: 4px; margin-bottom: 5px; line-height: 1.3;
     }
+    #article-length { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px; }
+    
     .article-preview {
-      font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; padding-bottom: 40px;
-      word-wrap: break-word; overflow-wrap: break-word;
+      font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;
     }
-    
-    /* 黒塗り装飾 */
-    .masked-block {
-      background-color: #202122; color: transparent; border-radius: 2px; margin: 0 1px; user-select: none;
-    }
+    .masked-block { background-color: #202122; color: transparent; border-radius: 2px; margin: 0 1px; user-select: none; }
     .revealed { color: var(--text); }
-    .revealed-latest {
-      background-color: #eaf3ff; color: #0645ad; font-weight: bold; border-radius: 2px;
-      animation: highlightFade 2s ease-out;
+    
+    /* ハイライト点滅アニメーション */
+    .highlight-click {
+      background-color: #cce0ff !important;
+      color: var(--link) !important;
+      font-weight: bold;
+      border-radius: 2px;
+      animation: pulseHighlight 0.6s alternate 3;
     }
-    @keyframes highlightFade { 0% { background-color: #ffe299; } 100% { background-color: #eaf3ff; } }
-
-    /* トースト (上部に変更) */
-    .toast {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px; border-radius: 8px;
-      z-index: 10001; opacity: 0; transition: opacity 0.3s; pointer-events: none;
-      font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    #confetti-canvas {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 10000; display: none;
+    @keyframes pulseHighlight {
+      from { background-color: #eaf3ff; }
+      to { background-color: #99c2ff; }
     }
 
-    .mode-box {
-      margin-bottom: 15px; padding: 12px; background: #fff; border: 1px solid var(--border-light); border-radius: 4px;
+    /* 下部固定パネル */
+    #bottom-panel {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      background: #ffffff; border-top: 2px solid var(--ooui-blue);
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 9999;
+      padding: 12px 15px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .bottom-panel-inner { max-width: 1000px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;}
+    .bottom-history-container {
+      flex: 1; max-height: 250px; overflow-y: auto;
+      border: 1px solid var(--border-light); background: #f8f9fa; border-radius: 4px;
     }
     
-    /* ヒートマップバッジ */
+    /* 履歴リスト */
+    .toc-list { list-style: none; margin: 0; padding: 0; }
+    .toc-item { padding: 6px 10px; font-size: 0.95rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .toc-item:hover { background: #fff; }
+    .toc-item.miss .toc-word { color: var(--text-muted); }
     .toc-badge { font-size: 0.8rem; padding: 2px 8px; border-radius: 12px; font-weight: bold; min-width: 48px; text-align: center; }
     .badge-miss { background: #eaecf0; color: #72777d; }
     .badge-low { background: #e6f6ee; color: #007a50; border: 1px solid #bce8d2; }
     .badge-mid { background: #bce8d2; color: #005a30; border: 1px solid #00af89; }
     .badge-high { background: #fc3; color: #523b00; border: 1px solid #d4a700; }
-    .toc-item { padding: 8px 6px; font-size: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer;}
-    .toc-item:hover { background: #f8f9fa; }
-    .toc-item.miss .toc-word { color: var(--text-muted); }
 
+    /* トースト */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px; border-radius: 8px;
+      z-index: 10001; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+      font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content; max-width: 90%;
+    }
+    #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10000; display: none; }
+    
+    .hint-badge {
+      background: var(--ooui-blue); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.9rem;
+      margin-right: 6px; display: inline-block; margin-bottom: 4px;
+    }
+    .mode-box { margin-bottom: 15px; padding: 12px; background: #fff; border: 1px solid var(--border-light); border-radius: 4px; }
+    
     #loading-view { text-align: center; padding: 50px 20px; color: var(--text-muted); }
     .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border-light); border-top-color: var(--ooui-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;}
+    
+    /* ランキングテーブル */
+    #leaderboard-table th, #leaderboard-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-light); text-align: left; }
+    
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ====================================================
-       PC / タブレット用レイアウト (2カラム)
-       ==================================================== */
-    @media (min-width: 769px) {
-      .left-panel {
-        flex: 0 0 350px; position: sticky; top: 20px;
-        display: flex; flex-direction: column; gap: 15px;
-        max-height: calc(100vh - 40px);
-      }
-      .right-panel { flex: 1; min-width: 0; }
-      
-      .game-panel {
-        order: 1; background: #f8f9fa; border: 1px solid var(--border-light);
-        padding: 16px; border-radius: 4px;
-      }
-      .history-collapsible {
-        order: 2; display: block !important; flex: 1; min-height: 0;
-      }
-      .toc-box {
-        border: 1px solid var(--border); background: #f8f9fa; padding: 12px; border-radius: 4px;
-        display: flex; flex-direction: column; height: 100%;
-      }
-      .toc-list {
-        list-style: none; flex: 1; overflow-y: auto; padding-right: 5px;
-      }
-      .mobile-toggle-bar { display: none !important; }
-    }
-
-    /* ====================================================
-       スマートフォン用レイアウト (固定ボトムパネル)
-       ==================================================== */
     @media (max-width: 768px) {
       #content { padding: 1em; border: none; }
       .firstHeading { font-size: 1.5rem; }
-      .main-grid { flex-direction: column; margin-top: 5px; gap: 10px; }
-      
-      .right-panel { width: 100%; padding-bottom: 160px; /* 下部パネルの高さ分余白を確保 */ }
       .article-preview { font-size: 1rem; }
-
-      .left-panel {
-        position: fixed; bottom: 0; left: 0; width: 100%;
-        background: #ffffff; border-top: 1px solid var(--border);
-        z-index: 9999; box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-        padding: 10px 15px 20px; /* セーフエリア考慮 */
-        display: flex; flex-direction: column; gap: 8px;
-        max-height: 85vh;
-      }
-
-      /* 1. 折りたたみ履歴 */
-      .history-collapsible {
-        order: 1; display: none; 
-        max-height: 45vh; overflow-y: auto;
-        border-bottom: 1px solid var(--border-light);
-        margin-bottom: 5px; padding-bottom: 5px;
-      }
-      .history-collapsible.open { display: block; }
-      .toc-box { border: none; padding: 0; background: transparent; }
-      .toc-list { list-style: none; }
-
-      /* 2. トグル＆操作バー */
-      .mobile-toggle-bar {
-        order: 2; display: flex; justify-content: space-between; align-items: center;
-      }
-
-      /* 3. 入力フォーム */
-      .game-panel {
-        order: 3; border: none; padding: 0; margin: 0; background: transparent;
-      }
-      
-      .desktop-only { display: none !important; }
+      .bottom-history-container { max-height: 140px; }
     }
   </style>
 </head>
@@ -229,7 +169,7 @@
   <header id="mw-header">
     <a href="#" onclick="location.reload()" class="wiki-logo">
       <div class="wiki-logo-icon">W</div>
-      <div class="wiki-logo-text"><strong>WIKIPEDIA</strong><span>推測ゲーム</span></div>
+      <div class="wiki-logo-text"><strong>Wikinator</strong><span>ウィキネイター</span></div>
     </a>
     <div class="header-actions">
       <button class="icon-btn" id="mute-btn" onclick="toggleMute()" title="ミュート切替">🔊</button>
@@ -242,34 +182,36 @@
       <div class="ambox ambox-notice">
         <div style="font-size:1.8rem; line-height:1;">📚</div>
         <div style="width: 100%;">
-          <strong class="ambox-title">ゲーム設定 (全文版)</strong>
-          <p style="margin-bottom:12px;">Wikipediaの記事本文が黒塗りされています。単語を推測して送信し、徐々にアンマスクされる文脈から「記事のタイトル」を当ててください。</p>
+          <strong class="ambox-title">Wikinator 設定</strong>
+          <p style="margin-bottom:12px;">Wikipediaの黒塗りされた記事を、単語を推測して開示しながら「タイトル」を当てるゲームです。</p>
           
           <div class="mode-box">
-            <label style="font-weight:bold; display:block; margin-bottom:10px;">ゲームモードを選択:</label>
+            <label style="font-weight:bold; display:block; margin-bottom:10px;">ゲームモード:</label>
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()">
-              🌟 良質な記事モード (おすすめ)
+              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()"> 🌟 良質な記事モード (おすすめ)
             </label>
             <label style="display:block; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="random" onchange="toggleMode()">
-              🎲 完全ランダムモード (激ムズ)
+              <input type="radio" name="game-mode" value="random" onchange="toggleMode()"> 🎲 完全ランダムモード (激ムズ)
             </label>
           </div>
 
           <div id="category-wrapper" style="margin-bottom:15px; transition: opacity 0.2s;">
             <label style="font-weight:bold; display:block; margin-bottom:6px;">カテゴリ (良質モード用):</label>
-            <select id="category-select" class="mw-ui-input" style="max-width:300px;">
-              <option value="all">すべて (良質な記事)</option>
-              <option value="history">歴史・事件</option>
-              <option value="science">科学・自然・宇宙</option>
-              <option value="geo">地理・国・都市</option>
-              <option value="culture">人物・文化・芸術</option>
+            <select id="category-select" class="mw-ui-input" style="max-width:350px;">
+              <option value="all">すべて (良質な記事・秀逸な記事)</option>
+              <option value="history">📜 歴史・戦争・事件</option>
+              <option value="science">🧪 科学・物理・宇宙・自然</option>
+              <option value="geo">🌍 地理・国・都市・名所</option>
+              <option value="person">👤 人物・伝記・偉人</option>
+              <option value="culture">🎨 芸術・文学・音楽・映画</option>
+              <option value="subculture">🎮 アニメ・漫画・ゲーム・サブカル</option>
+              <option value="sports">⚽ スポーツ・競技・選手</option>
+              <option value="politics">🏛️ 政治・経済・社会制度</option>
+              <option value="philosophy">💭 哲学・思想・宗教</option>
             </select>
           </div>
-          
           <div style="margin-top:20px;">
-            <button type="button" class="mw-ui-button progressive" onclick="startGame()" style="width:100%; max-width:300px; padding:12px;">ゲームを開始</button>
+            <button type="button" class="mw-ui-button progressive" onclick="startGame()" style="width:100%; max-width:350px; padding:12px;">ゲームを開始</button>
           </div>
         </div>
       </div>
@@ -282,80 +224,160 @@
       <p id="loading-submsg" style="font-size:0.9rem; margin-top:8px;">(データ量が多いため数秒かかる場合があります)</p>
     </div>
 
-    <!-- ゲーム画面 -->
+    <!-- ゲーム画面 (記事エリア) -->
     <div id="game-view" style="display:none;">
-      
-      <!-- 結果表示 -->
+      <!-- 終了時結果 -->
       <div id="result-ambox" class="ambox" style="display: none; flex-direction: column;">
         <div style="display: flex; gap: 15px; align-items:flex-start;">
           <div id="result-icon" style="font-size:2rem; line-height:1;">🎉</div>
           <div style="flex: 1;">
             <strong class="ambox-title" id="result-title" style="font-size:1.2rem;">正解です！</strong>
+            
+            <div id="result-score-box" style="margin: 8px 0; font-size: 1.1rem; background:#f0f8ff; padding:10px; border-radius:4px; border:1px solid #cce0ff;">
+              <div>⏱ タイム: <strong id="result-time" style="color:var(--text);"></strong></div>
+              <div>🏅 得点: <strong id="result-score" style="color:#d32f2f; font-size:1.2rem;"></strong> 点</div>
+            </div>
+            
             <p id="result-desc"></p>
             <div style="margin-top: 15px; display:flex; gap:10px; flex-wrap:wrap;">
               <button class="mw-ui-button progressive" onclick="location.reload()">次の記事へ</button>
-              <button class="mw-ui-button" onclick="shareResult()">📋 シェア</button>
+              <a id="share-x-btn" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none; background:#0f1419; color:#fff; border-color:#0f1419;">𝕏 ポスト</a>
               <a id="result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">Wikipedia ↗</a>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="main-grid">
-        <!-- 操作・履歴パネル (PC: 左カラム, スマホ: 画面下部固定) -->
-        <div class="left-panel">
-          
-          <!-- スマホ用トグルバー -->
-          <div class="mobile-toggle-bar">
-            <button class="mw-ui-button" id="history-toggle-btn" onclick="toggleHistory()" style="background:transparent; border:none; padding:4px 0; box-shadow:none; font-weight:bold; color:var(--link);">📋 履歴 (0件) <span style="font-size:0.8em;">▼</span></button>
-            <div style="display:flex; gap:8px;">
-              <button class="mw-ui-button" id="hint-btn-mobile" onclick="useHint()" style="padding:6px 10px;">💡(3)</button>
-              <button class="mw-ui-button" onclick="giveUp()" style="padding:6px 10px; color:var(--ambox-red);">🏳️</button>
-            </div>
-          </div>
-
-          <!-- 履歴リストエリア -->
-          <div class="history-collapsible" id="history-container">
-            <div class="toc-box">
-              <div class="toc-title">
-                <span>質問履歴 <span id="hit-rate-pc" class="desktop-only"></span></span>
-                <select id="sort-select" class="mw-ui-input" style="width: auto; padding: 4px 8px; font-size:0.9rem;" onchange="renderHistory()">
-                  <option value="new">新着順</option>
-                  <option value="count">回数順</option>
-                </select>
-              </div>
-              <ul class="toc-list" id="history-list"></ul>
-            </div>
-          </div>
-
-          <!-- 入力フォームエリア -->
-          <div class="game-panel">
-            <div class="stats-row desktop-only" style="margin-bottom:12px; font-size:0.9rem;">
-              <span>試行: <strong id="guess-count">0</strong>回</span>
-              <div style="display:flex; gap:8px;">
-                <button type="button" class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:6px 12px;">💡 ヒント(3)</button>
-                <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="padding:6px 12px; color:var(--ambox-red);">🏳️ ギブアップ</button>
-              </div>
-            </div>
-            
-            <form id="guess-form" onsubmit="handleGuess(event)" style="display:flex; gap:8px;">
-              <input type="text" class="mw-ui-input" id="word-input" placeholder="単語を入力..." required autocomplete="off">
-              <button type="submit" class="mw-ui-button progressive" id="submit-btn" style="min-width:70px;">送信</button>
-            </form>
-          </div>
+      <!-- ランキングセクション -->
+      <div id="ranking-section" class="ambox ambox-notice" style="display:none; flex-direction:column; margin-top: 15px;">
+        <strong class="ambox-title">🏆 オンラインランキング (Top 10)</strong>
+        <div id="ranking-form" style="display:none; gap:8px; margin-bottom:12px;">
+          <input type="text" id="player-name" class="mw-ui-input" placeholder="ニックネーム" maxlength="12" style="max-width:200px;">
+          <button class="mw-ui-button progressive" onclick="submitScoreBtn()">スコアを登録</button>
         </div>
+        <table id="leaderboard-table" style="width:100%; border-collapse: collapse; font-size:0.95rem;">
+          <thead>
+            <tr><th style="width:50px;">順位</th><th>名前</th><th>得点</th><th>タイム</th></tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <tr><td colspan="4">読み込み中...（API未設定時は表示されません）</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-        <!-- 記事プレビューエリア -->
-        <div class="right-panel">
-          <h1 class="firstHeading" id="article-heading">【 ■ ■ ■ 】</h1>
-          <div id="article-preview" class="article-preview"></div>
+      <!-- 開示されたヒントボックス -->
+      <div id="revealed-hints-box" class="ambox ambox-notice" style="display:none; align-items:center;">
+        <div style="font-size:1.4rem;">💡</div>
+        <div style="flex:1;">
+          <strong style="display:block; font-size:0.9rem; margin-bottom:4px;">開示されたキーワード:</strong>
+          <div id="revealed-hints-list"></div>
         </div>
       </div>
+
+      <h1 class="firstHeading" id="article-heading">【 ■ ■ ■ 】</h1>
+      <div id="article-length"></div>
+      <div id="article-preview" class="article-preview"></div>
     </div>
   </main>
 
+  <!-- 下部固定UIパネル -->
+  <div id="bottom-panel" style="display:none;">
+    <div class="bottom-panel-inner">
+      <div class="panel-header">
+        <div style="font-size:0.9rem;">試行: <strong id="guess-count">0</strong>回 <span id="hit-rate-pc" style="color:var(--text-muted); margin-left:6px;"></span></div>
+        <div style="display:flex; gap:8px;">
+          <button class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:6px 10px; font-size:0.85rem;">💡 キーワード開示(3)</button>
+          <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="padding:6px 10px; font-size:0.85rem; color:var(--ambox-red);">🏳️ ギブアップ</button>
+        </div>
+      </div>
+      
+      <form id="guess-form" onsubmit="handleGuess(event)" style="display:flex; gap:8px;">
+        <input type="text" class="mw-ui-input" id="word-input" placeholder="単語を入力..." required autocomplete="off">
+        <button type="submit" class="mw-ui-button progressive" id="submit-btn" style="min-width:70px;">送信</button>
+      </form>
+      
+      <div class="bottom-history-container">
+        <div style="display:flex; justify-content:space-between; padding:4px 8px; background:#eaecf0; font-size:0.85rem; font-weight:bold; position:sticky; top:0; z-index:1;">
+          <span>質問履歴 (新着順) <span style="font-weight:normal; color:var(--text-muted);">※クリックで該当箇所へ</span></span>
+        </div>
+        <ul class="toc-list" id="history-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase モジュール読み込みとランキング処理 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, push, query, orderByChild, limitToLast, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    // ▼ ここにFirebaseのConfigを貼り付けてください ▼
+   const firebaseConfig = {
+  apiKey: "AIzaSyC6UvafVPeO9asW7e_e7m1LOvPyfRhm_hQ",
+  authDomain: "wikinator-rank.firebaseapp.com",
+  databaseURL: "https://wikinator-rank-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wikinator-rank",
+  storageBucket: "wikinator-rank.firebasestorage.app",
+  messagingSenderId: "753431540247",
+  appId: "1:753431540247:web:d22441209b365d1059e252"
+};
+    // ▲ ここまで ▲
+
+    let db;
+    try {
+      if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
+        const app = initializeApp(firebaseConfig);
+        db = getDatabase(app);
+      }
+    } catch(e) { console.error("Firebase Init Error:", e); }
+
+    window.submitScoreToDB = async function(name, score, timeStr, article) {
+      if (!db) { alert("ランキング機能（APIキー）が未設定です。"); return; }
+      try {
+        const scoresRef = ref(db, 'leaderboard');
+        await push(scoresRef, {
+          name: name || "名無し",
+          score: score,
+          time: timeStr,
+          article: article,
+          timestamp: Date.now()
+        });
+        await window.loadLeaderboard();
+      } catch(e) { console.error(e); alert("スコアの登録に失敗しました"); }
+    };
+
+    window.loadLeaderboard = async function() {
+      const tbody = document.getElementById('leaderboard-body');
+      if (!db) { tbody.innerHTML = '<tr><td colspan="4">APIキー未設定のためランキングは無効です</td></tr>'; return; }
+      try {
+        const scoresRef = query(ref(db, 'leaderboard'), orderByChild('score'), limitToLast(10));
+        const snapshot = await get(scoresRef);
+        let data = [];
+        snapshot.forEach(child => { data.push(child.val()); });
+        data.sort((a,b) => b.score - a.score);
+        
+        tbody.innerHTML = '';
+        if(data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4">まだスコアがありません</td></tr>';
+          return;
+        }
+        data.forEach((d, i) => {
+          const tr = document.createElement('tr');
+          // 外部入力のエスケープ処理
+          tr.innerHTML = `
+            <td>${i+1}</td>
+            <td style="font-weight:bold;">${window.escapeHtml(d.name)}</td>
+            <td style="color:#d32f2f; font-weight:bold;">${d.score}</td>
+            <td>${d.time}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="4">ランキング取得エラー</td></tr>'; }
+    };
+  </script>
+
+  <!-- ゲームのメイン処理 -->
   <script>
-    // --- 1. グローバル変数 & 状態 ---
+    // --- グローバル変数 & 状態 ---
     const MAX_HINTS = 3;
     let currentArticle = null;
     let attempts = [];
@@ -363,46 +385,30 @@
     let isGameOver = false;
     let currentTurn = 0;
     
-    // 黒塗り管理
+    // スコア・タイム用
+    let startTime = 0;
+    window.currentScore = 0;
+    window.currentTimeStr = '';
+
+    let hintCandidates = [];
     let charRevealed; 
-
-    // スマホ履歴トグル状態
-    let isHistoryOpen = false;
-
-    // オーディオ
     let audioCtx = null;
     let isMuted = false;
 
-    // --- UIトグル・制御 ---
+    // Firebase用のエスケープ関数公開
+    window.escapeHtml = function(str) {
+      if(!str) return '';
+      return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
+    }
+    const escapeHtml = window.escapeHtml;
+
     function toggleMode() {
       const isRandom = document.querySelector('input[name="game-mode"]:checked').value === 'random';
-      const catSelect = document.getElementById('category-select');
-      const catWrapper = document.getElementById('category-wrapper');
-      catSelect.disabled = isRandom;
-      catWrapper.style.opacity = isRandom ? '0.4' : '1';
+      document.getElementById('category-select').disabled = isRandom;
+      document.getElementById('category-wrapper').style.opacity = isRandom ? '0.4' : '1';
     }
 
-    function toggleHistory() {
-      isHistoryOpen = !isHistoryOpen;
-      const container = document.getElementById('history-container');
-      if (isHistoryOpen) {
-        container.classList.add('open');
-      } else {
-        container.classList.remove('open');
-      }
-      updateHistoryButton();
-    }
-
-    function updateHistoryButton() {
-      const btn = document.getElementById('history-toggle-btn');
-      if (isHistoryOpen) {
-        btn.innerHTML = `📋 履歴 (${attempts.length}件) <span style="font-size:0.8em;">▲</span>`;
-      } else {
-        btn.innerHTML = `📋 履歴 (${attempts.length}件) <span style="font-size:0.8em;">▼</span>`;
-      }
-    }
-
-    // --- 2. Web Audio API 音声生成 ---
+    // --- Web Audio API ---
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -415,14 +421,11 @@
       if (isMuted || !audioCtx) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
       gain.gain.setValueAtTime(vol, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + duration);
     }
     function playClick() { playTone(600, 'sine', 0.05, 0.1); }
     function playHit(count) { playTone(400 + Math.min(count, 25) * 20, 'triangle', 0.25, 0.2); }
@@ -439,7 +442,6 @@
       setTimeout(() => playTone(293.66, 'triangle', 0.6, 0.2), 400);
     }
 
-    // --- 3. テキスト正規化 ---
     function normalizeChar(char) {
       let c = char.toLowerCase();
       if (/[Ａ-Ｚａ-ｚ０-９]/.test(c)) c = String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
@@ -447,80 +449,89 @@
       return c;
     }
     function normalizeText(str) {
-      let res = '';
-      for(let i=0; i<str.length; i++) res += normalizeChar(str[i]);
+      let res = ''; for(let i=0; i<str.length; i++) res += normalizeChar(str[i]);
       return res;
     }
-    function escapeHtml(str) {
-      return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
-    }
 
-    // --- 4. Wikipedia API 取得 ---
     async function fetchArticle(mode, categoryType) {
-      if (mode === 'random') {
-        for (let attempt = 0; attempt < 10; attempt++) {
-          try {
-            const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=10&prop=extracts&explaintext=1&origin=*&format=json`;
-            const res = await fetch(endpoint);
-            const data = await res.json();
-            if (data && data.query && data.query.pages) {
-              let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
-              for (const p of pages) {
-                if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避') || p.title.includes('一覧')) continue;
-                const clean = p.title.replace(/\s*\(.*?\)$/, '');
-                return {
-                  title: p.title, cleanTitle: clean, extract: p.extract,
-                  normalizedExtract: normalizeText(p.extract), normalizedCleanTitle: normalizeText(clean),
-                  url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`, modeName: '🎲 完全ランダム'
-                };
-              }
-            }
-          } catch(e) { console.error(e); }
-        }
-        return fetchArticle('quality', 'all');
-      } else {
-        const cats = {
-          'all': ['Category:良質な記事'],
-          'history': ['歴史', '時代', '事件', '戦争', '史'],
-          'science': ['科学', '物理', '化学', '生物', '宇宙', '自然', '医学', '工学'],
-          'geo': ['地理', '国', '都市', '地形', '交通', '地域', '山'],
-          'culture': ['人物', '文化', '芸術', '音楽', '美術', '宗教', '文学']
-        };
-        const targets = cats[categoryType];
-        const chars = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let playedHistory = JSON.parse(sessionStorage.getItem('wikinator_history') || '[]');
+      
+      const cats = {
+        'all': ['Category:良質な記事', 'Category:秀逸な記事'],
+        'history': ['歴史', '時代', '事件', '戦争', '史', '遺跡', '反乱', '紛争'],
+        'science': ['科学', '物理', '化学', '生物', '宇宙', '自然', '医学', '工学', '数学', '天文学'],
+        'geo': ['地理', '国', '都市', '地形', '交通', '地域', '山', '河川', '島', '鉄道'],
+        'person': ['人物', '伝記', '学者', '政治家', '軍人', '生涯', '一族'],
+        'culture': ['芸術', '文化', '音楽', '美術', '文学', '映画', '建築', '小説', '作品'],
+        'subculture': ['アニメ', '漫画', 'ゲーム', 'キャラクター', '声優', 'サブカル'],
+        'sports': ['スポーツ', '野球', 'サッカー', '競技', '五輪', '陸上', '選手'],
+        'politics': ['政治', '経済', '社会', '法律', '企業', '産業', '制度'],
+        'philosophy': ['哲学', '思想', '宗教', '神話', '仏教', 'キリスト教']
+      };
 
-        for (let attempt = 0; attempt < 10; attempt++) {
-          try {
+      for (let attempt = 0; attempt < 15; attempt++) {
+        try {
+          let endpoint = '';
+          if (mode === 'random') {
+            endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=10&prop=extracts|links&explaintext=1&pllimit=max&plnamespace=0&origin=*&format=json`;
+          } else {
+            const chars = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわABCDEFGHIJKLMNOPQRSTUVWXYZ';
             const randChar = chars[Math.floor(Math.random() * chars.length)];
-            const endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=Category:良質な記事&gcmnamespace=0&gcmlimit=50&gcmstartsortkeyprefix=${encodeURIComponent(randChar)}&prop=extracts|categories&explaintext=1&cllimit=max&origin=*&format=json`;
-            const res = await fetch(endpoint);
-            const data = await res.json();
-            
-            if (data && data.query && data.query.pages) {
-              let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
-              for (const p of pages) {
-                if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避')) continue;
-                let match = (categoryType === 'all');
-                if (!match && p.categories) {
-                  const catStr = p.categories.map(c => c.title).join(' ');
-                  match = targets.some(kw => catStr.includes(kw));
-                }
-                if (match) {
-                  const clean = p.title.replace(/\s*\(.*?\)$/, '');
-                  const sel = document.getElementById('category-select');
-                  const catName = sel.options[sel.selectedIndex].text;
-                  return {
-                    title: p.title, cleanTitle: clean, extract: p.extract,
-                    normalizedExtract: normalizeText(p.extract), normalizedCleanTitle: normalizeText(clean),
-                    url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`, modeName: `🌟 良質な記事 (${catName})`
-                  };
-                }
+            const catMode = ['Category:良質な記事', 'Category:秀逸な記事'][Math.floor(Math.random() * 2)];
+            endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=${encodeURIComponent(catMode)}&gcmnamespace=0&gcmlimit=50&gcmstartsortkeyprefix=${encodeURIComponent(randChar)}&prop=extracts|categories|links&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
+          }
+
+          const res = await fetch(endpoint);
+          const data = await res.json();
+          
+          if (data && data.query && data.query.pages) {
+            let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
+            for (const p of pages) {
+              if (!p.extract || p.extract.length < 600 || p.title.includes('曖昧さ回避') || p.title.includes('一覧')) continue;
+              const cleanTitle = p.title.replace(/\s*\(.*?\)$/, '');
+              
+              if (playedHistory.includes(cleanTitle)) continue;
+
+              if (mode !== 'random' && categoryType !== 'all') {
+                if (!p.categories) continue;
+                const catStr = p.categories.map(c => c.title).join(' ');
+                if (!cats[categoryType].some(kw => catStr.includes(kw))) continue;
               }
+
+              // 【改善2】ヒント候補抽出時のタイトル完全除外
+              let extractedHints = [];
+              const normExtract = normalizeText(p.extract);
+              const normTitle = normalizeText(cleanTitle);
+              
+              if (p.links) {
+                extractedHints = p.links
+                  .map(l => l.title.replace(/\s*\(.*?\)$/, '')) 
+                  .filter(t => t.length >= 2 && !t.includes(':'))
+                  .filter(t => {
+                    const normT = normalizeText(t);
+                    // タイトルを部分一致で含む単語は除外
+                    if (normT.includes(normTitle) || normTitle.includes(normT)) return false;
+                    return normExtract.includes(normT); // 本文に存在するもののみ
+                  });
+              }
+
+              playedHistory.push(cleanTitle);
+              if (playedHistory.length > 5) playedHistory.shift();
+              sessionStorage.setItem('wikinator_history', JSON.stringify(playedHistory));
+
+              const sel = document.getElementById('category-select');
+              return {
+                title: p.title, cleanTitle: cleanTitle, extract: p.extract,
+                normalizedExtract: normExtract, normalizedCleanTitle: normTitle,
+                url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
+                modeName: mode === 'random' ? '🎲 完全ランダム' : `🌟 良質な記事 (${sel.options[sel.selectedIndex].text.split(' ')[0]})`,
+                hints: extractedHints
+              };
             }
-          } catch(e) { console.error(e); }
-        }
-        return fetchArticle('quality', 'all');
+          }
+        } catch(e) { console.error(e); }
       }
+      return fetchArticle('quality', 'all'); 
     }
 
     async function startGame() {
@@ -528,54 +539,52 @@
       const mode = document.querySelector('input[name="game-mode"]:checked').value;
       const cat = document.getElementById('category-select').value;
       
-      if (mode === 'random') {
-        document.getElementById('loading-msg').textContent = '完全ランダム記事を探しています...';
-        document.getElementById('loading-submsg').textContent = '(※非常にマニアックなお題が出る場合があります)';
-      } else {
-        document.getElementById('loading-msg').textContent = 'Wikipediaから記事全文を取得しています...';
-        document.getElementById('loading-submsg').textContent = '(データ量が多いため数秒かかる場合があります)';
-      }
-
+      document.getElementById('loading-msg').textContent = mode === 'random' ? '完全ランダム記事を探しています...' : 'Wikipediaから記事全文を取得しています...';
       document.getElementById('setup-view').style.display = 'none';
       document.getElementById('loading-view').style.display = 'block';
 
       currentArticle = await fetchArticle(mode, cat);
       charRevealed = new Uint16Array(currentArticle.extract.length);
+      hintCandidates = currentArticle.hints; 
       
       document.getElementById('loading-view').style.display = 'none';
       document.getElementById('game-view').style.display = 'block';
-      document.getElementById('word-input').focus();
+      document.getElementById('bottom-panel').style.display = 'flex';
+      
+      document.getElementById('article-length').textContent = `記事の総文字数: 約 ${currentArticle.extract.length.toLocaleString()} 文字`;
       
       updateArticlePreview(0);
+      document.getElementById('word-input').focus();
+      
+      // タイム計測開始
+      startTime = Date.now();
     }
 
-    // --- 5. ゲームロジック ---
     function handleGuess(e) {
       e.preventDefault();
       if (isGameOver) return;
       initAudio();
-
+      
       const inputElem = document.getElementById('word-input');
       const rawWord = inputElem.value.trim();
+      if (rawWord.length < 1) return;
+
+      const charArray = Array.from(rawWord);
+      if (charArray.length === 1 && !/^[\p{Script=Han}々]$/u.test(rawWord)) {
+        showToast('ひらがな・カタカナ・英数字は2文字以上で入力してください');
+        inputElem.value = ''; inputElem.focus(); return;
+      }
+      
+      processGuess(rawWord, false);
+      inputElem.value = '';
+    }
+
+    function processGuess(rawWord, isHint = false) {
       const normWord = normalizeText(rawWord);
       
-      if (normWord.length < 1) return;
-
-      // 1文字ゴリ押し防止バリデーション
-      const charArray = Array.from(rawWord);
-      if (charArray.length === 1) {
-        if (!/^[\p{Script=Han}々]$/u.test(rawWord)) {
-          showToast('ひらがな・カタカナ・英数字は2文字以上で入力してください');
-          inputElem.value = '';
-          inputElem.focus();
-          return;
-        }
-      }
-
       if (attempts.some(a => a.norm === normWord)) {
-        showToast('すでに質問済みです');
-        inputElem.value = '';
-        return;
+        if (!isHint) showToast('すでに質問済みです');
+        return false;
       }
 
       currentTurn++;
@@ -591,69 +600,81 @@
       }
 
       const isCorrect = (normWord === currentArticle.normalizedCleanTitle || rawWord === currentArticle.title);
-      attempts.unshift({ word: rawWord, norm: normWord, count, hit: count > 0, turn: currentTurn, isCorrect });
+      attempts.unshift({ word: rawWord, norm: normWord, count, hit: count > 0, turn: currentTurn, isCorrect, isHint });
       
-      inputElem.value = '';
-      if (count > 0) playHit(count); else playMiss();
+      if (!isHint) {
+        if (count > 0) playHit(count); else playMiss();
+      }
       
       updateUI();
       updateArticlePreview(currentTurn);
 
       if (isCorrect) endGame(true);
+      return true;
     }
 
+    // --- ヒント (重複防止ロジック適用) ---
     function useHint() {
       if (isGameOver || hintsUsed >= MAX_HINTS) return;
+      
+      let hintWord = '';
+      // 過去に質問・開示済みの単語を除外
+      const availableHints = hintCandidates.filter(c => {
+        const norm = normalizeText(c);
+        return !attempts.some(a => a.norm === norm);
+      });
+
+      if (availableHints.length > 0) {
+        const idx = Math.floor(Math.random() * availableHints.length);
+        hintWord = availableHints[idx];
+      } else {
+        // 万が一候補が尽きた場合のフォールバック（本文から適当な5文字を抽出）
+        hintWord = currentArticle.extract.replace(/\s/g,'').substring(50, 55);
+      }
+
       hintsUsed++;
       playClick();
-      
-      const hints = [
-        `タイトルは ${currentArticle.cleanTitle.length} 文字です。`,
-        `最初の文字は「 ${currentArticle.cleanTitle[0]} 」です。`,
-        `最後の文字は「 ${currentArticle.cleanTitle[currentArticle.cleanTitle.length-1]} 」です。`
-      ];
-      
-      showToast(`💡 ヒント ${hintsUsed}/3\n${hints[hintsUsed-1]}`);
+      processGuess(hintWord, true);
+
+      document.getElementById('revealed-hints-box').style.display = 'flex';
+      const listElem = document.getElementById('revealed-hints-list');
+      const span = document.createElement('span');
+      span.className = 'hint-badge';
+      span.textContent = hintWord;
+      listElem.appendChild(span);
+
+      showToast(`💡 キーワード「${hintWord}」を開示しました (${hintsUsed}/${MAX_HINTS})`);
       
       const remain = MAX_HINTS - hintsUsed;
-      document.getElementById('hint-btn').innerHTML = `💡 ヒント(${remain})`;
-      document.getElementById('hint-btn-mobile').innerHTML = `💡(${remain})`;
-      
-      if (hintsUsed >= MAX_HINTS) {
-        document.getElementById('hint-btn').disabled = true;
-        document.getElementById('hint-btn-mobile').disabled = true;
-      }
+      document.getElementById('hint-btn').innerHTML = `💡 キーワード開示(${remain})`;
+      if (hintsUsed >= MAX_HINTS) document.getElementById('hint-btn').disabled = true;
     }
 
-    // --- 6. UI 更新 ---
+    // --- UI 更新 ---
     function updateUI() {
-      document.getElementById('guess-count').textContent = attempts.length;
-      const hits = attempts.filter(a => a.hit).length;
-      const rate = Math.round((hits / attempts.length) * 100) || 0;
+      const manualAttempts = attempts.filter(a => !a.isHint); 
+      document.getElementById('guess-count').textContent = manualAttempts.length;
+      
+      const hits = manualAttempts.filter(a => a.hit).length;
+      const rate = Math.round((hits / manualAttempts.length) * 100) || 0;
       document.getElementById('hit-rate-pc').textContent = `(ヒット率: ${rate}%)`;
       
-      updateHistoryButton();
       renderHistory();
-      
-      const latestItem = attempts[0];
-      const badge = document.getElementById(`badge-${latestItem.turn}`);
-      if (badge) animateValue(badge, 0, latestItem.count, 400);
     }
 
     function renderHistory() {
-      const sort = document.getElementById('sort-select').value;
-      let list = [...attempts];
-      if (sort === 'count') list.sort((a, b) => b.count - a.count || b.turn - a.turn);
-      
-      const html = list.map(item => {
+      const html = attempts.map(item => {
         let bClass = 'badge-miss';
         if (item.count > 0 && item.count < 5) bClass = 'badge-low';
         else if (item.count >= 5 && item.count < 20) bClass = 'badge-mid';
         else if (item.count >= 20) bClass = 'badge-high';
         
-        return `<li class="toc-item ${item.hit?'hit':'miss'}" onclick="scrollToLatest()">
-          <span class="toc-word">${escapeHtml(item.word)}</span>
-          <span class="toc-badge ${bClass}" id="badge-${item.turn}">${item.count}回</span>
+        const hintMark = item.isHint ? ' <span style="font-size:0.8em; color:var(--ooui-blue);">[💡ヒント]</span>' : '';
+        
+        // 【改善3】クリックでハイライト処理(highlightTurn)を呼び出す
+        return `<li class="toc-item ${item.hit?'hit':'miss'}" onclick="highlightTurn(${item.turn})">
+          <span class="toc-word">${escapeHtml(item.word)}${hintMark}</span>
+          <span class="toc-badge ${bClass}">${item.count}回</span>
         </li>`;
       }).join('');
       document.getElementById('history-list').innerHTML = html;
@@ -675,10 +696,13 @@
           i = j - 1;
         } else {
           if (charRevealed[i] > 0 && maskRegex.test(text[i])) {
-            const isLatest = (charRevealed[i] === latestTurn);
+            const turn = charRevealed[i];
+            const isLatest = (turn === latestTurn);
             let idStr = '';
             if (isLatest && !addedLatestId) { idStr = ' id="latest-hit"'; addedLatestId = true; }
-            html.push(`<span class="${isLatest ? 'revealed-latest' : 'revealed'}"${idStr}>${escapeHtml(text[i])}</span>`);
+            
+            // ハイライト検索用に turn-X クラスを付与
+            html.push(`<span class="revealed turn-${turn} ${isLatest ? 'revealed-latest' : ''}"${idStr}>${escapeHtml(text[i])}</span>`);
           } else {
             html.push(escapeHtml(text[i]));
           }
@@ -693,18 +717,24 @@
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    function animateValue(obj, start, end, duration) {
-      let startTimestamp = null;
-      const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        obj.innerHTML = Math.floor(progress * (end - start) + start) + '回';
-        if (progress < 1) window.requestAnimationFrame(step);
-      };
-      window.requestAnimationFrame(step);
-    }
+    // 【改善3】 質問履歴クリック時のスクロール＆ハイライト処理
+    window.highlightTurn = function(turn) {
+      document.querySelectorAll('.highlight-click').forEach(el => el.classList.remove('highlight-click'));
+      const els = document.querySelectorAll(`.turn-${turn}`);
+      if (els.length > 0) {
+        els[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        els.forEach(el => el.classList.add('highlight-click'));
+        // 2秒後にハイライトクラスを外す
+        setTimeout(() => {
+          els.forEach(el => el.classList.remove('highlight-click'));
+        }, 2000);
+      } else {
+        // 当該ターンの文字が0回ヒットの場合
+        showToast("その単語は本文中に存在しません");
+      }
+    };
 
-    // --- 8. ゲーム終了 ---
+    // --- ゲーム終了 ---
     function giveUp() {
       if (isGameOver) return;
       if (!confirm('ギブアップして答えを見ますか？')) return;
@@ -713,13 +743,30 @@
 
     function endGame(isClear) {
       isGameOver = true;
-      document.getElementById('word-input').blur(); // キーボード閉じる
+      document.getElementById('word-input').blur();
       document.getElementById('word-input').disabled = true;
       document.getElementById('submit-btn').disabled = true;
       document.getElementById('hint-btn').disabled = true;
-      document.getElementById('hint-btn-mobile').disabled = true;
       document.getElementById('giveup-btn').disabled = true;
       
+      // 【改善1】タイムとスコアの計算
+      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsedSeconds / 60);
+      const seconds = elapsedSeconds % 60;
+      const timeStr = isClear ? `${minutes}分${seconds}秒` : '記録なし';
+      
+      let finalScore = 0;
+      if (isClear) {
+        const manualAttempts = attempts.filter(a => !a.isHint).length;
+        const penaltyAttempts = manualAttempts * 50;
+        const penaltyHints = hintsUsed * 500;
+        const penaltyTime = elapsedSeconds * 5;
+        finalScore = Math.max(100, 10000 - penaltyAttempts - penaltyHints - penaltyTime);
+      }
+      window.currentScore = finalScore;
+      window.currentTimeStr = timeStr;
+
+      // 画面更新
       document.getElementById('article-heading').textContent = currentArticle.title;
       updateArticlePreview(0); // 全文解禁
 
@@ -728,37 +775,54 @@
       document.getElementById('result-icon').textContent = isClear ? '🎉' : '🏳️';
       document.getElementById('result-title').textContent = isClear ? '見事正解です！' : 'ギブアップしました。';
       
+      document.getElementById('result-time').textContent = timeStr;
+      document.getElementById('result-score').textContent = finalScore;
+      
       document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.9rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${escapeHtml(currentArticle.modeName)}</span>`;
       document.getElementById('result-link').href = currentArticle.url;
-      ambox.style.display = 'flex';
+      
+      // ランキング表示
+      document.getElementById('ranking-section').style.display = 'flex';
+      if(isClear) {
+        document.getElementById('ranking-form').style.display = 'flex';
+      }
+      if(window.loadLeaderboard) window.loadLeaderboard();
 
+      // 【改善4】X（Twitter）シェア指定フォーマット生成
+      const shareUrl = "https://t-sukuea-latatalas.github.io/Wikinator";
+      let shareText = '';
+      if (isClear) {
+        shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n得点："${finalScore}"点\nタイム："${timeStr}"\n${shareUrl}\n#Wikinator`;
+      } else {
+        shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n\nクリアならず\n\n${shareUrl}\n#Wikinator`;
+      }
+      document.getElementById('share-x-btn').href = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+
+      ambox.style.display = 'flex';
       if (isClear) { playClear(); startConfetti(); } else { playGiveup(); }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // --- 9. 通知 & SNS ---
-    function shareResult() {
-      const hitCount = attempts.filter(a => a.hit).length;
-      const rate = Math.round((hitCount / attempts.length) * 100) || 0;
-      let emj = '';
-      for (let i = 0; i < Math.min(attempts.length, 6); i++) {
-        emj += attempts[i].isCorrect ? '🟩' : (attempts[i].hit ? '🟨' : '⬛');
+    // ランキング登録ボタン用関数
+    window.submitScoreBtn = async function() {
+      const name = document.getElementById('player-name').value.trim() || '名無し';
+      document.getElementById('ranking-form').style.display = 'none'; // 連打防止
+      if(window.submitScoreToDB) {
+        await window.submitScoreToDB(name, window.currentScore, window.currentTimeStr, currentArticle.title);
       }
-      const text = `📚 Wikipedia推測ゲーム\n🧩 モード: ${currentArticle.modeName}\n🎯 試行: ${attempts.length}回 (ヒット率: ${rate}%)\n💡 ヒント: ${hintsUsed}/${MAX_HINTS}\n${emj} ${attempts[0].isCorrect ? '🎉 正解！' : '🏳️ ギブアップ'}\n#WikiGuess`;
-      
-      navigator.clipboard.writeText(text).then(() => showToast('結果をクリップボードにコピーしました！'));
-    }
+    };
 
+    // --- トースト ---
     let toastTimeout;
     function showToast(msg) {
       const toast = document.getElementById('toast');
-      toast.innerText = msg; // 改行も反映
+      toast.innerText = msg;
       toast.style.opacity = 1;
       clearTimeout(toastTimeout);
       toastTimeout = setTimeout(() => toast.style.opacity = 0, 3500);
     }
 
-    // --- 10. 紙吹雪 ---
+    // --- 紙吹雪 ---
     let particles = [], confettiFrame;
     function startConfetti() {
       const cvs = document.getElementById('confetti-canvas');
