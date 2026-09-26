@@ -4,6 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Wikinator (ウィキネイター) - Wikipedia推測ゲーム</title>
+  
+  <!-- ファビコン・Webクリップアイコン -->
+  <link rel="icon" type="image/png" href="https://t-sukuea-latatalas.github.io/Wikinator/icon.png">
+  <link rel="apple-touch-icon" href="https://t-sukuea-latatalas.github.io/Wikinator/icon.png">
+
+  <!-- OGP設定（X / Twitter / SNSプレビュー用） -->
+  <meta property="og:url" content="https://t-sukuea-latatalas.github.io/Wikinator/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Wikinator (ウィキネイター) - Wikipedia推測ゲーム" />
+  <meta property="og:description" content="隠されたWikipedia記事のタイトルを、単語を質問しながら推測して当てるアキネーター型ゲーム！" />
+  <meta property="og:image" content="https://t-sukuea-latatalas.github.io/Wikinator/icon.png" />
+  <meta property="og:site_name" content="Wikinator" />
+
+  <!-- X (Twitter) Card設定（画像を大きく表示） -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Wikinator (ウィキネイター) - Wikipedia推測ゲーム" />
+  <meta name="twitter:description" content="隠されたWikipedia記事のタイトルを、単語を質問しながら推測して当てるアキネーター型ゲーム！" />
+  <meta name="twitter:image" content="https://t-sukuea-latatalas.github.io/Wikinator/icon.png" />
+
   <style>
     :root {
       --wiki-bg: #f6f6f6; --content-bg: #ffffff; --text: #202122; --text-muted: #54595d;
@@ -56,7 +75,7 @@
     .badge-high { background: #fc3; color: #523b00; border: 1px solid #d4a700; }
     .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 10001; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content; max-width: 90%; }
     #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10000; display: none; }
-    .hint-badge { background: var(--ooui-blue); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.9rem; margin-right: 6px; display: inline-block; margin-bottom: 4px; }
+    .hint-badge { background: var(--ooui-blue); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.9rem; margin-right: 6px; display: inline-block; vertical-align: middle; }
     .mode-box { margin-bottom: 15px; padding: 12px; background: #fff; border: 1px solid var(--border-light); border-radius: 4px; }
     #loading-view { text-align: center; padding: 50px 20px; color: var(--text-muted); }
     .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border-light); border-top-color: var(--ooui-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;}
@@ -73,7 +92,7 @@
 
   <header id="mw-header">
     <a href="#" onclick="location.reload()" class="wiki-logo">
-      <div class="wiki-logo-icon">W</div>
+      <img src="https://t-sukuea-latatalas.github.io/Wikinator/icon.png" alt="W" class="wiki-logo-icon" style="background:transparent; object-fit:cover;">
       <div class="wiki-logo-text"><strong>Wikinator</strong><span>ウィキネイター</span></div>
     </a>
     <div class="header-actions">
@@ -159,11 +178,11 @@
 
       <div id="result-ranking-wrapper"></div>
 
-      <div id="revealed-hints-box" class="ambox ambox-notice" style="display:none; align-items:center;">
-        <div style="font-size:1.4rem;">💡</div>
+      <div id="revealed-hints-box" class="ambox ambox-notice" style="display:none; align-items:flex-start;">
+        <div style="font-size:1.4rem; padding-top:2px;">💡</div>
         <div style="flex:1;">
-          <strong style="display:block; font-size:0.9rem; margin-bottom:4px;">開示されたキーワード:</strong>
-          <div id="revealed-hints-list"></div>
+          <strong style="display:block; font-size:0.95rem; margin-bottom:6px;">開示されたヒント:</strong>
+          <div id="revealed-hints-list" style="font-size:0.9rem;"></div>
         </div>
       </div>
 
@@ -202,7 +221,7 @@
       <div class="panel-header">
         <div style="font-size:0.9rem;">試行: <strong id="guess-count">0</strong>回 <span id="hit-rate-pc" style="color:var(--text-muted); margin-left:6px;"></span></div>
         <div style="display:flex; gap:8px;">
-          <button class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:6px 10px; font-size:0.85rem;">💡 キーワード開示(3)</button>
+          <button class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:6px 10px; font-size:0.85rem;">💡 ヒント開示(3)</button>
           <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="padding:6px 10px; font-size:0.85rem; color:var(--ambox-red);">🏳️ ギブアップ</button>
         </div>
       </div>
@@ -224,16 +243,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, query, orderByChild, limitToLast, get, startAt } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    // ▼ ご自身のAPIキーに書き換えてください ▼
     const firebaseConfig = {
-  apiKey: "AIzaSyC6UvafVPeO9asW7e_e7m1LOvPyfRhm_hQ",
-  authDomain: "wikinator-rank.firebaseapp.com",
-  databaseURL: "https://wikinator-rank-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "wikinator-rank",
-  storageBucket: "wikinator-rank.firebasestorage.app",
-  messagingSenderId: "753431540247",
-  appId: "1:753431540247:web:d22441209b365d1059e252"
-};
+      apiKey: "AIzaSyC6UvafVPeO9asW7e_e7m1LOvPyfRhm_hQ",
+      authDomain: "wikinator-rank.firebaseapp.com",
+      databaseURL: "https://wikinator-rank-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "wikinator-rank",
+      storageBucket: "wikinator-rank.firebasestorage.app",
+      messagingSenderId: "753431540247",
+      appId: "1:753431540247:web:d22441209b365d1059e252"
+    };
 
     let db;
     try {
@@ -243,7 +261,7 @@
       }
     } catch(e) { console.error("Firebase Init Error:", e); }
 
-    // Firebase DBのインスタンスをグローバルに渡す（fetchArticleでリストを取得するため）
+    // Firebase DBのインスタンスをグローバルに渡す
     window.firebaseDB = db;
 
     window.currentRankingPeriod = 'weekly';
@@ -364,14 +382,12 @@
             const diff = document.getElementById('difficulty-select').value;
             if (diff === 'easy') diffName = '初級'; else if (diff === 'normal') diffName = '中級'; else diffName = '上級';
             
-            // Firebaseからお題リストの件数を取得してランダムアクセス (データベースが無い場合はフォールバック)
             let targetTitle = "地球"; 
             if(window.firebaseDB) {
               const { get, ref } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js");
               const countSnap = await get(ref(window.firebaseDB, `curated_meta/${diff}_count`));
               const maxCount = countSnap.val();
               if (maxCount) {
-                // 履歴にないものが出るまで最大10回抽選
                 for(let i=0; i<10; i++) {
                   let r = Math.floor(Math.random() * maxCount);
                   let wordSnap = await get(ref(window.firebaseDB, `curated_lists/${diff}/${r}`));
@@ -380,7 +396,7 @@
                     targetTitle = fetchedTitle;
                     break;
                   }
-                  if (fetchedTitle) targetTitle = fetchedTitle; // 万が一全部履歴にあればそのまま使う
+                  if (fetchedTitle) targetTitle = fetchedTitle; 
                 }
               }
             }
@@ -502,25 +518,60 @@
       return true;
     }
 
+    // --- ヒントの3段階化 ---
     function useHint() {
       if (isGameOver || hintsUsed >= MAX_HINTS) return;
-      let hintWord = '';
-      const availableHints = hintCandidates.filter(c => { const norm = normalizeText(c); return !attempts.some(a => a.norm === norm); });
-      if (availableHints.length > 0) {
-        hintWord = availableHints[Math.floor(Math.random() * availableHints.length)];
-      } else {
-        hintWord = currentArticle.extract.replace(/\s/g,'').substring(50, 55);
-      }
-      hintsUsed++; playClick(); processGuess(hintWord, true);
+      
+      hintsUsed++;
+      playClick();
 
       document.getElementById('revealed-hints-box').style.display = 'flex';
       const listElem = document.getElementById('revealed-hints-list');
-      const span = document.createElement('span'); span.className = 'hint-badge'; span.textContent = hintWord;
-      listElem.appendChild(span);
-      showToast(`💡 キーワード「${hintWord}」を開示しました (${hintsUsed}/${MAX_HINTS})`);
+      
+      let toastMsg = "";
+
+      if (hintsUsed === 1) {
+        // 第1ヒント: 文字数
+        const length = currentArticle.cleanTitle.length;
+        const p = document.createElement('div');
+        p.style.marginBottom = "6px";
+        p.innerHTML = `<strong>第1ヒント:</strong> タイトルは <strong>${length}</strong> 文字です`;
+        listElem.appendChild(p);
+        toastMsg = `💡 第1ヒントを開示しました (${hintsUsed}/${MAX_HINTS})`;
+      } 
+      else if (hintsUsed === 2) {
+        // 第2ヒント: キーワード開示
+        let hintWord = '';
+        const availableHints = hintCandidates.filter(c => { const norm = normalizeText(c); return !attempts.some(a => a.norm === norm); });
+        if (availableHints.length > 0) {
+          hintWord = availableHints[Math.floor(Math.random() * availableHints.length)];
+        } else {
+          hintWord = currentArticle.extract.replace(/\s/g,'').substring(50, 55);
+        }
+        
+        // 内部的にアンマスク処理
+        processGuess(hintWord, true);
+
+        const p = document.createElement('div');
+        p.style.marginBottom = "6px";
+        p.innerHTML = `<strong>第2ヒント (キーワード):</strong> <span class="hint-badge">${escapeHtml(hintWord)}</span>`;
+        listElem.appendChild(p);
+        toastMsg = `💡 キーワード「${hintWord}」を開示しました (${hintsUsed}/${MAX_HINTS})`;
+      } 
+      else if (hintsUsed === 3) {
+        // 第3ヒント: 頭文字
+        const firstChar = currentArticle.cleanTitle.charAt(0);
+        const p = document.createElement('div');
+        p.style.marginBottom = "6px";
+        p.innerHTML = `<strong>第3ヒント:</strong> タイトルの最初の文字は『 <strong>${escapeHtml(firstChar)}</strong> 』です`;
+        listElem.appendChild(p);
+        toastMsg = `💡 第3ヒントを開示しました (${hintsUsed}/${MAX_HINTS})`;
+      }
+
+      showToast(toastMsg);
       
       const remain = MAX_HINTS - hintsUsed;
-      document.getElementById('hint-btn').innerHTML = `💡 キーワード開示(${remain})`;
+      document.getElementById('hint-btn').innerHTML = `💡 ヒント開示(${remain})`;
       if (hintsUsed >= MAX_HINTS) document.getElementById('hint-btn').disabled = true;
     }
 
