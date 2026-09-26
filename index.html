@@ -118,7 +118,7 @@
               <input type="radio" name="game-mode" value="curated" onchange="toggleMode()">【おすすめ】厳選記事
             </label>
             <label style="display:block; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="random" onchange="toggleMode()">【地獄】完全ランダムモード
+              <input type="radio" name="game-mode" value="random" onchange="toggleMode()">【地獄】完全ランダム
             </label>
           </div>
 
@@ -414,9 +414,9 @@
               sessionStorage.setItem('wikinator_history', JSON.stringify(playedHistory));
 
               let finalModeName = '';
-              if (mode === 'random') finalModeName = '🎲 完全ランダム';
-              else if (mode === 'curated') finalModeName = `🎯 厳選お題 (${diffName})`;
-              else finalModeName = '🌟 良質な記事';
+              if (mode === 'random') finalModeName = '完全ランダム';
+              else if (mode === 'curated') finalModeName = `厳選記事 (${diffName})`;
+              else finalModeName = '良質な記事';
 
               return {
                 title: p.title, cleanTitle: cleanTitle, extract: p.extract, normalizedExtract: normExtract, normalizedCleanTitle: normTitle,
