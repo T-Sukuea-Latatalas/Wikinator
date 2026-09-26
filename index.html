@@ -129,7 +129,7 @@
               <option value="easy">初級</option>
               <option value="normal">中級</option>
               <option value="hard">上級</option>
-              <option value="pr">超厳選</option>
+              <option value="pr">不可能ption>
             </select>
           </div>
           <div style="margin-top:20px;">
@@ -359,7 +359,7 @@
           
           if (mode === 'curated') {
             const diff = document.getElementById('difficulty-select').value;
-            if (diff === 'easy') diffName = '初級'; else if (diff === 'normal') diffName = '中級'; else if (diff === 'hard') diffName = '上級'; else diffName = '超厳選';
+            if (diff === 'easy') diffName = '初級'; else if (diff === 'normal') diffName = '中級'; else if (diff === 'hard') diffName = '上級'; else diffName = '不可能';
             
             let targetTitle = "地球"; 
             if(window.firebaseDB) {
