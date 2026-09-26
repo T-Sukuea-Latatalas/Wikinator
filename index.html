@@ -6,22 +6,22 @@
   <title>Wikinator (ウィキネイター) - Wikipedia推測ゲーム</title>
   
   <!-- ファビコン・Webクリップアイコン -->
-  <link rel="icon" type="image/png" href="https://t-sukuea-latatalas.github.io/Wikinator/icon.png">
-  <link rel="apple-touch-icon" href="https://t-sukuea-latatalas.github.io/Wikinator/icon.png">
+  <link rel="icon" type="image/png" href="https://t-sukuea-latatalas.github.io/Wikinator/wikinaotr_icon.png">
+  <link rel="apple-touch-icon" href="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png">
 
   <!-- OGP設定（X / Twitter / SNSプレビュー用） -->
   <meta property="og:url" content="https://t-sukuea-latatalas.github.io/Wikinator/" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Wikinator (ウィキネイター) - Wikipedia推測ゲーム" />
   <meta property="og:description" content="隠されたWikipedia記事のタイトルを、単語を質問しながら推測して当てるアキネーター型ゲーム！" />
-  <meta property="og:image" content="https://t-sukuea-latatalas.github.io/Wikinator/icon.png" />
+  <meta property="og:image" content="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png" />
   <meta property="og:site_name" content="Wikinator" />
 
   <!-- X (Twitter) Card設定（画像を大きく表示） -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Wikinator (ウィキネイター) - Wikipedia推測ゲーム" />
   <meta name="twitter:description" content="隠されたWikipedia記事のタイトルを、単語を質問しながら推測して当てるアキネーター型ゲーム！" />
-  <meta name="twitter:image" content="https://t-sukuea-latatalas.github.io/Wikinator/icon.png" />
+  <meta name="twitter:image" content="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png" />
 
   <style>
     :root {
@@ -92,7 +92,7 @@
 
   <header id="mw-header">
     <a href="#" onclick="location.reload()" class="wiki-logo">
-      <img src="https://t-sukuea-latatalas.github.io/Wikinator/icon.png" alt="W" class="wiki-logo-icon" style="background:transparent; object-fit:cover;">
+      <img src="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png" alt="W" class="wiki-logo-icon" style="background:transparent; object-fit:cover;">
       <div class="wiki-logo-text"><strong>Wikinator</strong><span>ウィキネイター</span></div>
     </a>
     <div class="header-actions">
@@ -110,36 +110,23 @@
           <div class="mode-box">
             <label style="font-weight:bold; display:block; margin-bottom:10px;">ゲームモード:</label>
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()"> 🌟 良質な記事モード (おすすめ)
+              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()"> 🌟 【まあムズイ】良質な記事
             </label>
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="curated" onchange="toggleMode()"> 🎯 厳選お題モード (初心者おすすめ)
+              <input type="radio" name="game-mode" value="curated" onchange="toggleMode()"> 🎯 【おすすめ】厳選記事
             </label>
             <label style="display:block; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="random" onchange="toggleMode()"> 🎲 完全ランダムモード (激ムズ)
+              <input type="radio" name="game-mode" value="random" onchange="toggleMode()"> 🎲 【地獄】ランダムな記事
             </label>
           </div>
-          <div id="category-wrapper" style="margin-bottom:15px; transition: opacity 0.2s;">
-            <label style="font-weight:bold; display:block; margin-bottom:6px;">カテゴリ (良質モード用):</label>
-            <select id="category-select" class="mw-ui-input" style="max-width:350px;">
-              <option value="all">すべて (良質な記事・秀逸な記事)</option>
-              <option value="history">📜 歴史・戦争・事件</option>
-              <option value="science">🧪 科学・物理・宇宙・自然</option>
-              <option value="geo">🌍 地理・国・都市・名所</option>
-              <option value="person">👤 人物・伝記・偉人</option>
-              <option value="culture">🎨 芸術・文学・音楽・映画</option>
-              <option value="subculture">🎮 アニメ・漫画・ゲーム・サブカル</option>
-              <option value="sports">⚽ スポーツ・競技・選手</option>
-              <option value="politics">🏛️ 政治・経済・社会制度</option>
-              <option value="philosophy">💭 哲学・思想・宗教</option>
-            </select>
-          </div>
+
+          <!-- 難易度選択 (厳選お題モード用) -->
           <div id="difficulty-wrapper" style="margin-bottom:15px; display:none;">
             <label style="font-weight:bold; display:block; margin-bottom:6px;">難易度 (厳選お題モード用):</label>
             <select id="difficulty-select" class="mw-ui-input" style="max-width:350px;">
-              <option value="easy">🔰 初級 (超有名トピック)</option>
-              <option value="normal">🎓 中級 (一般常識レベル)</option>
-              <option value="hard">🧠 上級 (やや深い教養)</option>
+              <option value="easy">🔰 初級</option>
+              <option value="normal">🎓 中級</option>
+              <option value="hard">🧠 上級</option>
             </select>
           </div>
           <div style="margin-top:20px;">
@@ -261,7 +248,6 @@
       }
     } catch(e) { console.error("Firebase Init Error:", e); }
 
-    // Firebase DBのインスタンスをグローバルに渡す
     window.firebaseDB = db;
 
     window.currentRankingPeriod = 'weekly';
@@ -331,11 +317,8 @@
 
     function toggleMode() {
       const mode = document.querySelector('input[name="game-mode"]:checked').value;
-      const catWrapper = document.getElementById('category-wrapper');
       const diffWrapper = document.getElementById('difficulty-wrapper');
-      if (mode === 'quality') { catWrapper.style.display = 'block'; diffWrapper.style.display = 'none'; } 
-      else if (mode === 'curated') { catWrapper.style.display = 'none'; diffWrapper.style.display = 'block'; } 
-      else { catWrapper.style.display = 'none'; diffWrapper.style.display = 'none'; }
+      diffWrapper.style.display = (mode === 'curated') ? 'block' : 'none';
     }
 
     function initAudio() {
@@ -364,15 +347,8 @@
     }
     function normalizeText(str) { let res = ''; for(let i=0; i<str.length; i++) res += normalizeChar(str[i]); return res; }
 
-    async function fetchArticle(mode, categoryType) {
+    async function fetchArticle(mode) {
       let playedHistory = JSON.parse(sessionStorage.getItem('wikinator_history') || '[]');
-      const cats = {
-        'all': ['Category:良質な記事', 'Category:秀逸な記事'], 'history': ['歴史', '時代', '事件', '戦争', '史', '遺跡', '反乱', '紛争'],
-        'science': ['科学', '物理', '化学', '生物', '宇宙', '自然', '医学', '工学', '数学', '天文学'], 'geo': ['地理', '国', '都市', '地形', '交通', '地域', '山', '河川', '島', '鉄道'],
-        'person': ['人物', '伝記', '学者', '政治家', '軍人', '生涯', '一族'], 'culture': ['芸術', '文化', '音楽', '美術', '文学', '映画', '建築', '小説', '作品'],
-        'subculture': ['アニメ', '漫画', 'ゲーム', 'キャラクター', '声優', 'サブカル'], 'sports': ['スポーツ', '野球', 'サッカー', '競技', '五輪', '陸上', '選手'],
-        'politics': ['政治', '経済', '社会', '法律', '企業', '産業', '制度'], 'philosophy': ['哲学', '思想', '宗教', '神話', '仏教', 'キリスト教']
-      };
 
       for (let attempt = 0; attempt < 15; attempt++) {
         try {
@@ -420,11 +396,6 @@
               const cleanTitle = p.title.replace(/\s*\(.*?\)$/, '');
               
               if (mode !== 'curated' && playedHistory.includes(cleanTitle)) continue;
-              if (mode === 'quality' && categoryType !== 'all') {
-                if (!p.categories) continue;
-                const catStr = p.categories.map(c => c.title).join(' ');
-                if (!cats[categoryType].some(kw => catStr.includes(kw))) continue;
-              }
 
               let extractedHints = [];
               const normExtract = normalizeText(p.extract);
@@ -442,7 +413,7 @@
               let finalModeName = '';
               if (mode === 'random') finalModeName = '🎲 完全ランダム';
               else if (mode === 'curated') finalModeName = `🎯 厳選お題 (${diffName})`;
-              else { const sel = document.getElementById('category-select'); finalModeName = `🌟 良質な記事 (${sel.options[sel.selectedIndex].text.split(' ')[0]})`; }
+              else finalModeName = '🌟 良質な記事';
 
               return {
                 title: p.title, cleanTitle: cleanTitle, extract: p.extract, normalizedExtract: normExtract, normalizedCleanTitle: normTitle,
@@ -452,13 +423,12 @@
           }
         } catch(e) { console.error(e); }
       }
-      return fetchArticle('quality', 'all'); 
+      return fetchArticle('quality'); 
     }
 
     async function startGame() {
       initAudio();
       const mode = document.querySelector('input[name="game-mode"]:checked').value;
-      const cat = document.getElementById('category-select').value;
       
       let loadingText = 'Wikipediaから記事全文を取得しています...';
       if(mode === 'random') loadingText = '完全ランダム記事を探しています...';
@@ -468,7 +438,7 @@
       document.getElementById('setup-view').style.display = 'none';
       document.getElementById('loading-view').style.display = 'block';
 
-      currentArticle = await fetchArticle(mode, cat);
+      currentArticle = await fetchArticle(mode);
       charRevealed = new Uint16Array(currentArticle.extract.length);
       hintCandidates = currentArticle.hints; 
       
@@ -549,7 +519,6 @@
           hintWord = currentArticle.extract.replace(/\s/g,'').substring(50, 55);
         }
         
-        // 内部的にアンマスク処理
         processGuess(hintWord, true);
 
         const p = document.createElement('div');
