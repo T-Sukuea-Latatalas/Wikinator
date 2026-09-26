@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Wikinator (ウィキネイター) - Wikipedia推測ゲーム</title>
   
-  <!-- ファビコン・Webクリップアイコン -->
-  <link rel="icon" type="image/png" href="https://t-sukuea-latatalas.github.io/Wikinator/wikinaotr_icon.png">
-  <link rel="apple-touch-icon" href="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png">
+  <!-- ファビコン・Webクリップアイコン（wikinator_icon.png に修正） -->
+  <link rel="icon" type="image/png" href="wikinator_icon.png">
+  <link rel="shortcut icon" type="image/png" href="wikinator_icon.png">
+  <link rel="apple-touch-icon" href="wikinator_icon.png">
 
   <!-- OGP設定（X / Twitter / SNSプレビュー用） -->
   <meta property="og:url" content="https://t-sukuea-latatalas.github.io/Wikinator/" />
@@ -34,7 +35,7 @@
     body { background-color: var(--wiki-bg); color: var(--text); font-family: sans-serif; font-size: 14px; line-height: 1.6; padding-bottom: 55vh; }
     #mw-header { max-width: 1000px; margin: 0 auto; padding: 12px 1em 8px; display: flex; align-items: center; justify-content: space-between; }
     .wiki-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
-    .wiki-logo-icon { width: 34px; height: 34px; background: #000; color: #fff; font-family: serif; font-size: 24px; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .wiki-logo-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; object-fit: cover; }
     .wiki-logo-text strong { font-family: serif; font-size: 1.15rem; display: block; }
     .wiki-logo-text span { font-size: 0.75rem; color: var(--text-muted); }
     .header-actions { display: flex; align-items: center; gap: 15px; }
@@ -92,7 +93,8 @@
 
   <header id="mw-header">
     <a href="#" onclick="location.reload()" class="wiki-logo">
-      <img src="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png" alt="W" class="wiki-logo-icon" style="background:transparent; object-fit:cover;">
+      <!-- ヘッダーのアイコンも wikinator_icon.png に更新 -->
+      <img src="wikinator_icon.png" alt="W" class="wiki-logo-icon">
       <div class="wiki-logo-text"><strong>Wikinator</strong><span>ウィキネイター</span></div>
     </a>
     <div class="header-actions">
@@ -110,13 +112,13 @@
           <div class="mode-box">
             <label style="font-weight:bold; display:block; margin-bottom:10px;">ゲームモード:</label>
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()"> 🌟 【まあムズイ】良質な記事
+              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()"> 🌟 良質な記事モード (おすすめ)
             </label>
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="curated" onchange="toggleMode()"> 🎯 【おすすめ】厳選記事
+              <input type="radio" name="game-mode" value="curated" onchange="toggleMode()"> 🎯 厳選お題モード (初心者おすすめ)
             </label>
             <label style="display:block; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="random" onchange="toggleMode()"> 🎲 【地獄】ランダムな記事
+              <input type="radio" name="game-mode" value="random" onchange="toggleMode()"> 🎲 完全ランダムモード (激ムズ)
             </label>
           </div>
 
@@ -124,9 +126,9 @@
           <div id="difficulty-wrapper" style="margin-bottom:15px; display:none;">
             <label style="font-weight:bold; display:block; margin-bottom:6px;">難易度 (厳選お題モード用):</label>
             <select id="difficulty-select" class="mw-ui-input" style="max-width:350px;">
-              <option value="easy">🔰 初級</option>
-              <option value="normal">🎓 中級</option>
-              <option value="hard">🧠 上級</option>
+              <option value="easy">🔰 初級 (超有名トピック)</option>
+              <option value="normal">🎓 中級 (一般常識レベル)</option>
+              <option value="hard">🧠 上級 (やや深い教養)</option>
             </select>
           </div>
           <div style="margin-top:20px;">
@@ -501,7 +503,6 @@
       let toastMsg = "";
 
       if (hintsUsed === 1) {
-        // 第1ヒント: 文字数
         const length = currentArticle.cleanTitle.length;
         const p = document.createElement('div');
         p.style.marginBottom = "6px";
@@ -510,7 +511,6 @@
         toastMsg = `💡 第1ヒントを開示しました (${hintsUsed}/${MAX_HINTS})`;
       } 
       else if (hintsUsed === 2) {
-        // 第2ヒント: キーワード開示
         let hintWord = '';
         const availableHints = hintCandidates.filter(c => { const norm = normalizeText(c); return !attempts.some(a => a.norm === norm); });
         if (availableHints.length > 0) {
@@ -528,7 +528,6 @@
         toastMsg = `💡 キーワード「${hintWord}」を開示しました (${hintsUsed}/${MAX_HINTS})`;
       } 
       else if (hintsUsed === 3) {
-        // 第3ヒント: 頭文字
         const firstChar = currentArticle.cleanTitle.charAt(0);
         const p = document.createElement('div');
         p.style.marginBottom = "6px";
