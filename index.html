@@ -111,24 +111,23 @@
           <p style="margin-bottom:12px;">Wikipediaの黒塗りされた記事を推測して開示しながら「タイトル」を当てるゲームです。</p>
           <div class="mode-box">
             <label style="font-weight:bold; display:block; margin-bottom:10px;">ゲームモード:</label>
-            <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()"> 🌟 良質な記事モード (おすすめ)
+            <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">【結構ムズイ】良質な記事
             </label>
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="curated" onchange="toggleMode()"> 🎯 厳選お題モード (初心者おすすめ)
+              <input type="radio" name="game-mode" value="curated" onchange="toggleMode()">【おすすめ】厳選記事
             </label>
             <label style="display:block; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="random" onchange="toggleMode()"> 🎲 完全ランダムモード (激ムズ)
+              <input type="radio" name="game-mode" value="random" onchange="toggleMode()"> 【地獄】完全ランダム
             </label>
           </div>
 
           <!-- 難易度選択 (厳選お題モード用) -->
           <div id="difficulty-wrapper" style="margin-bottom:15px; display:none;">
-            <label style="font-weight:bold; display:block; margin-bottom:6px;">難易度 (厳選お題モード用):</label>
+            <label style="font-weight:bold; display:block; margin-bottom:6px;">リストを選択:</label>
             <select id="difficulty-select" class="mw-ui-input" style="max-width:350px;">
-              <option value="easy">🔰 初級 (超有名トピック)</option>
-              <option value="normal">🎓 中級 (一般常識レベル)</option>
-              <option value="hard">🧠 上級 (やや深い教養)</option>
+              <option value="easy">初級</option>
+              <option value="normal">中級</option>
+              <option value="hard">上級</option>
             </select>
           </div>
           <div style="margin-top:20px;">
