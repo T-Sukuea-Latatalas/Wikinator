@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Wikinator (ウィキネイター) - Wikipedia推測ゲーム</title>
   
-  <!-- ファビコン・Webクリップアイコン（wikinator_icon.png に修正） -->
+  <!-- ファビコン・Webクリップアイコン -->
   <link rel="icon" type="image/png" href="wikinator_icon.png">
   <link rel="shortcut icon" type="image/png" href="wikinator_icon.png">
   <link rel="apple-touch-icon" href="wikinator_icon.png">
@@ -18,11 +18,14 @@
   <meta property="og:image" content="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png" />
   <meta property="og:site_name" content="Wikinator" />
 
-  <!-- X (Twitter) Card設定（画像を大きく表示） -->
+  <!-- X (Twitter) Card設定 -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Wikinator (ウィキネイター) - Wikipedia推測ゲーム" />
   <meta name="twitter:description" content="隠されたWikipedia記事のタイトルを、単語を質問しながら推測して当てるアキネーター型ゲーム！" />
   <meta name="twitter:image" content="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png" />
+
+  <!-- kuromoji.js（日本語形態素解析エンジン） -->
+  <script src="https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.min.js"></script>
 
   <style>
     :root {
@@ -32,14 +35,27 @@
       --ambox-yellow: #fc3; --ambox-green: #00af89; --ambox-red: #d33;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background-color: var(--wiki-bg); color: var(--text); font-family: sans-serif; font-size: 14px; line-height: 1.6; padding-bottom: 55vh; }
+    body { background-color: var(--wiki-bg); color: var(--text); font-family: sans-serif; font-size: 14px; line-height: 1.6; padding-bottom: 60vh; }
+    
+    .svg-icon {
+      display: inline-block;
+      vertical-align: -0.18em;
+      width: 1.15em;
+      height: 1.15em;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     #mw-header { max-width: 1000px; margin: 0 auto; padding: 12px 1em 8px; display: flex; align-items: center; justify-content: space-between; }
     .wiki-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
     .wiki-logo-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; object-fit: cover; }
     .wiki-logo-text strong { font-family: serif; font-size: 1.15rem; display: block; }
     .wiki-logo-text span { font-size: 0.75rem; color: var(--text-muted); }
     .header-actions { display: flex; align-items: center; gap: 15px; }
-    .icon-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; opacity: 0.8; transition: 0.2s; }
+    .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.8; transition: 0.2s; display: inline-flex; align-items: center; color: var(--text); }
     .icon-btn:hover { opacity: 1; }
     #content { max-width: 1000px; margin: 0 auto; background: var(--content-bg); border: 1px solid var(--border); padding: 1.5em; position: relative; }
     .ambox { border: 1px solid var(--border-light); border-left: 10px solid var(--border); padding: 12px; margin-bottom: 1.2em; display: flex; gap: 12px; font-size: 0.95rem; }
@@ -49,7 +65,7 @@
     .ambox-title { font-weight: bold; display: block; margin-bottom: 4px; font-size: 1.05rem; }
     .mw-ui-input { font-family: inherit; font-size: 16px; border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; outline: none; width: 100%; max-width: 100%; }
     .mw-ui-input:focus { border-color: var(--ooui-blue); box-shadow: inset 0 0 0 1px var(--ooui-blue); }
-    .mw-ui-button { font-size: 0.95rem; font-weight: bold; border-radius: 4px; padding: 10px 16px; cursor: pointer; border: 1px solid var(--border); background-color: #f8f9fa; color: var(--text); display: inline-flex; align-items: center; justify-content: center; transition: all 0.1s; }
+    .mw-ui-button { font-size: 0.9rem; font-weight: bold; border-radius: 4px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--border); background-color: #f8f9fa; color: var(--text); display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.1s; }
     .mw-ui-button:hover:not(:disabled) { background-color: #fff; border-color: #72777d; }
     .mw-ui-button.progressive { background-color: var(--ooui-blue); border-color: var(--ooui-blue); color: #fff; }
     .mw-ui-button.progressive:hover:not(:disabled) { background-color: var(--ooui-blue-hover); }
@@ -59,12 +75,35 @@
     .article-preview { font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; }
     .masked-block { background-color: #202122; color: transparent; border-radius: 2px; margin: 0 1px; user-select: none; }
     .revealed { color: var(--text); }
-    .highlight-click { background-color: #cce0ff !important; color: var(--link) !important; font-weight: bold; border-radius: 2px; animation: pulseHighlight 0.6s alternate 3; }
-    @keyframes pulseHighlight { from { background-color: #eaf3ff; } to { background-color: #99c2ff; } }
-    #bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 2px solid var(--ooui-blue); box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 9999; padding: 12px 15px; display: flex; flex-direction: column; gap: 8px; }
-    .bottom-panel-inner { max-width: 1000px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    
+    /* 永続ハイライト */
+    .highlight-active {
+      background-color: #cce0ff !important;
+      color: #0645ad !important;
+      font-weight: bold;
+      border-radius: 2px;
+      box-shadow: 0 0 0 2px #36c;
+    }
+    
+    /* 下部固定パネル */
+    #bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 2px solid var(--ooui-blue); box-shadow: 0 -4px 15px rgba(0,0,0,0.15); z-index: 9999; padding: 10px 15px; display: flex; flex-direction: column; gap: 8px; }
+    .bottom-panel-inner { max-width: 1000px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+    
+    #jump-nav-box {
+      display: none; align-items: center; justify-content: space-between;
+      background: #eaf3ff; border: 1px solid #bce8d2; border-radius: 4px; padding: 6px 12px; font-size: 0.88rem;
+    }
+    
+    #docked-hints-container {
+      display: none; font-size: 0.85rem; background: #fdfcf5; border: 1px solid #fc3; border-radius: 4px; padding: 6px 10px; max-height: 80px; overflow-y: auto;
+    }
+
+    #docked-result-actions {
+      display: none; gap: 8px; flex-wrap: wrap; background: #f3fbf8; border: 1px solid var(--ambox-green); border-radius: 4px; padding: 8px;
+    }
+
     .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;}
-    .bottom-history-container { flex: 1; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-light); background: #f8f9fa; border-radius: 4px; }
+    .bottom-history-container { flex: 1; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-light); background: #f8f9fa; border-radius: 4px; }
     .toc-list { list-style: none; margin: 0; padding: 0; }
     .toc-item { padding: 6px 10px; font-size: 0.95rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .toc-item:hover { background: #fff; }
@@ -74,17 +113,27 @@
     .badge-low { background: #e6f6ee; color: #007a50; border: 1px solid #bce8d2; }
     .badge-mid { background: #bce8d2; color: #005a30; border: 1px solid #00af89; }
     .badge-high { background: #fc3; color: #523b00; border: 1px solid #d4a700; }
+    
     .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 10001; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: max-content; max-width: 90%; }
     #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10000; display: none; }
-    .hint-badge { background: var(--ooui-blue); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.9rem; margin-right: 6px; display: inline-block; vertical-align: middle; }
+    .hint-badge { background: var(--ooui-blue); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; margin-right: 6px; display: inline-block; vertical-align: middle; }
     .mode-box { margin-bottom: 15px; padding: 12px; background: #fff; border: 1px solid var(--border-light); border-radius: 4px; }
     #loading-view { text-align: center; padding: 50px 20px; color: var(--text-muted); }
     .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border-light); border-top-color: var(--ooui-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;}
+    
     #leaderboard-table th, #leaderboard-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-light); text-align: left; }
     .ranking-tabs { display:flex; gap:6px; margin-top:8px; }
-    .ranking-tabs .mw-ui-button { padding: 6px 12px; font-size: 0.85rem; }
+    .ranking-tabs .mw-ui-button { padding: 4px 10px; font-size: 0.82rem; }
+    
+    .wiki-ext-link {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px;
+      color: var(--link); background: #fff; text-decoration: none; font-size: 0.82rem; gap: 4px;
+    }
+    .wiki-ext-link:hover { background: #f8f9fa; border-color: var(--link); }
+
     @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 768px) { #content { padding: 1em; border: none; } .firstHeading { font-size: 1.5rem; } .article-preview { font-size: 1rem; } .bottom-history-container { max-height: 140px; } }
+    @media (max-width: 768px) { #content { padding: 1em; border: none; } .firstHeading { font-size: 1.5rem; } .article-preview { font-size: 1rem; } .bottom-history-container { max-height: 120px; } }
   </style>
 </head>
 <body>
@@ -93,45 +142,87 @@
 
   <header id="mw-header">
     <a href="#" onclick="location.reload()" class="wiki-logo">
-      <!-- ヘッダーのアイコンも wikinator_icon.png に更新 -->
       <img src="wikinator_icon.png" alt="W" class="wiki-logo-icon">
       <div class="wiki-logo-text"><strong>Wikinator</strong><span>ウィキネイター</span></div>
     </a>
     <div class="header-actions">
-      <button class="icon-btn" id="mute-btn" onclick="toggleMute()" title="ミュート切替">🔊</button>
+      <button class="icon-btn" id="mute-btn" onclick="toggleMute()" title="ミュート切替">
+        <svg class="svg-icon" id="vol-icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+      </button>
     </div>
   </header>
 
   <main id="content">
     <div id="setup-view">
       <div class="ambox ambox-notice">
-        <div style="font-size:1.8rem; line-height:1;">📚</div>
+        <div style="padding-top:2px;">
+          <svg class="svg-icon" style="width:24px; height:24px;" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </div>
         <div style="width: 100%;">
           <strong class="ambox-title">Wikinator 設定</strong>
           <p style="margin-bottom:12px;">Wikipediaの黒塗りされた記事を推測して開示しながら「タイトル」を当てるゲームです。</p>
+          
           <div class="mode-box">
             <label style="font-weight:bold; display:block; margin-bottom:10px;">ゲームモード:</label>
+            
+            <!-- 1. 厳選記事モード (デフォルト) -->
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="quality" checked onchange="toggleMode()"> 【まあムズイ】良質な記事
+              <input type="radio" name="game-mode" value="curated" checked onchange="toggleMode()">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              【おすすめ】厳選記事
             </label>
+
+            <!-- 2. デイリー問題モード -->
             <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="curated" onchange="toggleMode()">【おすすめ】厳選記事
+              <input type="radio" name="game-mode" value="daily" onchange="toggleMode()">
+              <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              【日替わり】デイリー問題
             </label>
+
+            <!-- 3. ジャンル別モード -->
+            <label style="display:block; margin-bottom:12px; cursor:pointer; font-size:1.05rem;">
+              <input type="radio" name="game-mode" value="genre" onchange="toggleMode()">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"></path></svg>
+              【テーマ別】ジャンル別モード
+            </label>
+
+            <!-- 4. 完全ランダムモード -->
             <label style="display:block; cursor:pointer; font-size:1.05rem;">
-              <input type="radio" name="game-mode" value="random" onchange="toggleMode()">【地獄】完全ランダム
+              <input type="radio" name="game-mode" value="random" onchange="toggleMode()">
+              <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+              【地獄】完全ランダム
             </label>
           </div>
 
           <!-- 難易度選択 (厳選お題モード用) -->
-          <div id="difficulty-wrapper" style="margin-bottom:15px; display:none;">
-            <label style="font-weight:bold; display:block; margin-bottom:6px;">リストを選択:</label>
+          <div id="difficulty-wrapper" style="margin-bottom:15px; display:block;">
+            <label style="font-weight:bold; display:block; margin-bottom:6px;">難易度を選択:</label>
             <select id="difficulty-select" class="mw-ui-input" style="max-width:350px;">
-              <option value="easy">初級</option>
-              <option value="normal">中級</option>
-              <option value="hard">上級</option>
-              <option value="pr">不可能</option>
+              <option value="easy" selected>初級 (誰でも知ってる超メジャー)</option>
+              <option value="normal">中級 (一般常識・教科書レベル)</option>
+              <option value="hard">上級 (やや深い教養・歴史)</option>
+              <option value="pr">不可能 (超マニアック)</option>
             </select>
           </div>
+
+          <!-- デイリー問題: 出題日選択 -->
+          <div id="daily-wrapper" style="margin-bottom:15px; display:none;">
+            <label style="font-weight:bold; display:block; margin-bottom:6px;">出題日を選択 (過去問アーカイブ):</label>
+            <input type="date" id="daily-date-picker" class="mw-ui-input" style="max-width:260px;">
+          </div>
+
+          <!-- ジャンル選択 (ジャンル別モード用) -->
+          <div id="genre-wrapper" style="margin-bottom:15px; display:none;">
+            <label style="font-weight:bold; display:block; margin-bottom:6px;">ジャンルを選択:</label>
+            <select id="genre-select" class="mw-ui-input" style="max-width:350px;">
+              <option value="history" selected>📜 歴史・事件・人物</option>
+              <option value="science">🧪 科学・自然・宇宙</option>
+              <option value="geo">🌍 地理・国・名所</option>
+              <option value="anime">🎮 アニメ・マンガ・ゲーム</option>
+              <option value="culture">🎨 文化・芸術・文学</option>
+            </select>
+          </div>
+
           <div style="margin-top:20px;">
             <button type="button" class="mw-ui-button progressive" onclick="startGame()" style="width:100%; max-width:350px; padding:12px; font-size:1.1rem;">ゲームを開始</button>
           </div>
@@ -149,33 +240,25 @@
     <div id="game-view" style="display:none;">
       <div id="result-ambox" class="ambox" style="display: none; flex-direction: column;">
         <div style="display: flex; gap: 15px; align-items:flex-start;">
-          <div id="result-icon" style="font-size:2rem; line-height:1;">🎉</div>
+          <div id="result-icon" style="padding-top:2px;"></div>
           <div style="flex: 1;">
             <strong class="ambox-title" id="result-title" style="font-size:1.2rem;">正解です！</strong>
             <div id="result-score-box" style="margin: 8px 0; font-size: 1.1rem; background:#f0f8ff; padding:10px; border-radius:4px; border:1px solid #cce0ff;">
-              <div>⏱ タイム: <strong id="result-time" style="color:var(--text);"></strong></div>
-              <div>🏅 得点: <strong id="result-score" style="color:#d32f2f; font-size:1.2rem;"></strong> 点</div>
+              <div>
+                <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                タイム: <strong id="result-time" style="color:var(--text);"></strong>
+              </div>
+              <div style="margin-top:4px;">
+                <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                得点: <strong id="result-score" style="color:#d32f2f; font-size:1.2rem;"></strong> 点
+              </div>
             </div>
             <p id="result-desc"></p>
-            <div style="margin-top: 15px; display:flex; gap:10px; flex-wrap:wrap;">
-              <button class="mw-ui-button progressive" onclick="location.reload()">次の記事へ</button>
-              <a id="share-x-btn" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none; background:#0f1419; color:#fff; border-color:#0f1419;">𝕏 ポスト</a>
-              <a id="result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">Wikipedia ↗</a>
-            </div>
           </div>
         </div>
       </div>
 
       <div id="result-ranking-wrapper"></div>
-
-      <div id="revealed-hints-box" class="ambox ambox-notice" style="display:none; align-items:flex-start;">
-        <div style="font-size:1.4rem; padding-top:2px;">💡</div>
-        <div style="flex:1;">
-          <strong style="display:block; font-size:0.95rem; margin-bottom:6px;">開示されたヒント:</strong>
-          <div id="revealed-hints-list" style="font-size:0.9rem;"></div>
-        </div>
-      </div>
-
       <h1 class="firstHeading" id="article-heading">【 ■ ■ ■ 】</h1>
       <div id="article-length"></div>
       <div id="article-preview" class="article-preview"></div>
@@ -184,23 +267,39 @@
 
   <!-- ランキングDOM -->
   <div id="ranking-section" class="ambox ambox-notice" style="flex-direction:column; margin-top: 15px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-      <strong class="ambox-title">🏆 オンラインランキング (Top 10)</strong>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <strong class="ambox-title" style="margin:0;">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
+        オンラインランキング (Top 10)
+      </strong>
       <div class="ranking-tabs">
-        <button id="tab-weekly" class="mw-ui-button progressive" onclick="switchRankingTab('weekly')">📅 週間</button>
-        <button id="tab-all" class="mw-ui-button" onclick="switchRankingTab('all')">🏆 全期間</button>
+        <button id="tab-weekly" class="mw-ui-button progressive" onclick="switchRankingTab('weekly')">
+          <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          週間
+        </button>
+        <button id="tab-all" class="mw-ui-button" onclick="switchRankingTab('all')">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
+          全期間
+        </button>
       </div>
     </div>
     <div id="ranking-form" style="display:none; gap:8px; margin:12px 0;">
       <input type="text" id="player-name" class="mw-ui-input" placeholder="ニックネーム" maxlength="12" style="max-width:200px;">
       <button class="mw-ui-button progressive" onclick="submitScoreBtn()">スコアを登録</button>
     </div>
-    <table id="leaderboard-table" style="width:100%; border-collapse: collapse; font-size:0.95rem; margin-top:10px;">
+    <table id="leaderboard-table" style="width:100%; border-collapse: collapse; font-size:0.92rem; margin-top:10px;">
       <thead>
-        <tr><th style="width:50px;">順位</th><th>名前</th><th>得点</th><th>タイム</th></tr>
+        <tr>
+          <th style="width:40px;">順位</th>
+          <th>名前</th>
+          <th>得点</th>
+          <th>タイム</th>
+          <th>解いた記事</th>
+          <th style="width:60px;">リンク</th>
+        </tr>
       </thead>
       <tbody id="leaderboard-body">
-        <tr><td colspan="4">読み込み中...（API未設定時は表示されません）</td></tr>
+        <tr><td colspan="6">読み込み中...（API未設定時は表示されません）</td></tr>
       </tbody>
     </table>
   </div>
@@ -208,20 +307,73 @@
   <!-- 下部固定パネル -->
   <div id="bottom-panel" style="display:none;">
     <div class="bottom-panel-inner">
-      <div class="panel-header">
-        <div style="font-size:0.9rem;">試行: <strong id="guess-count">0</strong>回 <span id="hit-rate-pc" style="color:var(--text-muted); margin-left:6px;"></span></div>
-        <div style="display:flex; gap:8px;">
-          <button class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:6px 10px; font-size:0.85rem;">💡 ヒント開示(3)</button>
-          <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="padding:6px 10px; font-size:0.85rem; color:var(--ambox-red);">🏳️ ギブアップ</button>
+      
+      <!-- 永続ハイライト用 前後ジャンプナビ -->
+      <div id="jump-nav-box">
+        <span id="nav-info-text" style="font-weight:bold; color:var(--link);"></span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button type="button" class="mw-ui-button" onclick="prevNav()" style="padding:4px 8px;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg> 前へ
+          </button>
+          <button type="button" class="mw-ui-button" onclick="nextNav()" style="padding:4px 8px;">
+            次へ <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+          <button type="button" class="mw-ui-button" onclick="closeNav()" style="padding:4px 8px;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
       </div>
+
+      <!-- 開示されたヒント（常時固定表示エリア） -->
+      <div id="docked-hints-container">
+        <strong>開示ヒント:</strong>
+        <div id="docked-hints-list" style="margin-top:2px;"></div>
+      </div>
+
+      <!-- クリア/ギブアップ後の常時固定アクションボタン -->
+      <div id="docked-result-actions">
+        <button class="mw-ui-button progressive" onclick="location.reload()">次の記事へ</button>
+        <a id="docked-share-x-btn" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none; background:#0f1419; color:#fff; border-color:#0f1419;">
+          <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:none; fill:#fff;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg> ポスト
+        </a>
+        <a id="docked-result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">
+          Wikipedia <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        </a>
+      </div>
+
+      <div class="panel-header">
+        <div style="font-size:0.88rem;">試行: <strong id="guess-count">0</strong>回 <span id="hit-rate-pc" style="color:var(--text-muted); margin-left:4px;"></span></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <!-- お助け: 付属語OPEN (kuromoji形態素解析) -->
+          <button class="mw-ui-button" id="helper-particle-btn" onclick="openParticles()" style="padding:4px 8px; font-size:0.8rem;" title="助詞・助動詞をすべて開示 (-1000点)">
+            <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+            付属語OPEN
+          </button>
+          <!-- お助け: 数字OPEN -->
+          <button class="mw-ui-button" id="helper-number-btn" onclick="openNumbers()" style="padding:4px 8px; font-size:0.8rem;" title="数字（アラビア・漢数字）をすべて開示 (-500点)">
+            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+            数字OPEN
+          </button>
+          <!-- 3段階ヒント -->
+          <button class="mw-ui-button" id="hint-btn" onclick="useHint()" style="padding:4px 8px; font-size:0.8rem;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17h8v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"></path></svg>
+            ヒント(3)
+          </button>
+          <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="padding:4px 8px; font-size:0.8rem; color:var(--ambox-red);">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+            ギブアップ
+          </button>
+        </div>
+      </div>
+
       <form id="guess-form" onsubmit="handleGuess(event)" style="display:flex; gap:8px;">
         <input type="text" class="mw-ui-input" id="word-input" placeholder="単語を入力..." required autocomplete="off">
         <button type="submit" class="mw-ui-button progressive" id="submit-btn" style="min-width:70px;">送信</button>
       </form>
+      
       <div class="bottom-history-container">
-        <div style="display:flex; justify-content:space-between; padding:4px 8px; background:#eaecf0; font-size:0.85rem; font-weight:bold; position:sticky; top:0; z-index:1;">
-          <span>質問履歴 (新着順) <span style="font-weight:normal; color:var(--text-muted);">※クリックで該当箇所へ</span></span>
+        <div style="display:flex; justify-content:space-between; padding:4px 8px; background:#eaecf0; font-size:0.82rem; font-weight:bold; position:sticky; top:0; z-index:1;">
+          <span>質問履歴 (新着順) <span style="font-weight:normal; color:var(--text-muted);">※クリックで該当箇所ジャンプ</span></span>
         </div>
         <ul class="toc-list" id="history-list"></ul>
       </div>
@@ -272,8 +424,8 @@
 
     window.loadLeaderboard = async function() {
       const tbody = document.getElementById('leaderboard-body');
-      if (!db) { tbody.innerHTML = '<tr><td colspan="4">APIキー未設定</td></tr>'; return; }
-      tbody.innerHTML = '<tr><td colspan="4">読み込み中...</td></tr>';
+      if (!db) { tbody.innerHTML = '<tr><td colspan="6">APIキー未設定</td></tr>'; return; }
+      tbody.innerHTML = '<tr><td colspan="6">読み込み中...</td></tr>';
       try {
         let data = [];
         if (window.currentRankingPeriod === 'weekly') {
@@ -290,13 +442,27 @@
           data.sort((a,b) => b.score - a.score);
         }
         tbody.innerHTML = '';
-        if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4">スコアなし</td></tr>'; return; }
+        if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="6">スコアなし</td></tr>'; return; }
+        
         data.forEach((d, i) => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${i+1}</td><td style="font-weight:bold;">${window.escapeHtml(d.name)}</td><td style="color:#d32f2f; font-weight:bold;">${d.score}</td><td>${d.time}</td>`;
+          const artName = d.article || '-';
+          const linkHtml = d.article ? `
+            <a href="https://ja.wikipedia.org/wiki/${encodeURIComponent(d.article)}" target="_blank" rel="noopener noreferrer" class="wiki-ext-link">
+              開く <svg class="svg-icon" viewBox="0 0 24 24" style="width:0.9em;height:0.9em;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>` : '-';
+
+          tr.innerHTML = `
+            <td>${i+1}</td>
+            <td style="font-weight:bold;">${window.escapeHtml(d.name)}</td>
+            <td style="color:#d32f2f; font-weight:bold;">${d.score}</td>
+            <td>${d.time}</td>
+            <td style="font-weight:500;">${window.escapeHtml(artName)}</td>
+            <td>${linkHtml}</td>
+          `;
           tbody.appendChild(tr);
         });
-      } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="4">ランキング取得エラー</td></tr>'; }
+      } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="6">ランキング取得エラー</td></tr>'; }
     };
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -313,22 +479,109 @@
     window.currentScore = 0; window.currentTimeStr = '';
     let hintCandidates = []; let charRevealed; let audioCtx = null; let isMuted = false;
 
+    // AI生成データ (questions.json)
+    let questionsData = null;
+
+    // kuromoji トークナイザー
+    let kuromojiTokenizer = null;
+
+    // お助け機能状態
+    let helperParticleUsed = false;
+    let helperNumberUsed = false;
+
+    // 永続ハイライト & ナビゲーション状態
+    let currentNavWord = null;
+    let currentNavIndices = [];
+    let currentNavCurrentPos = 0;
+
+    // 内蔵フォールバックリスト（完全オフライン・APIダウン用）
+    const fallbackCuratedPool = {
+      easy: ["地球", "太陽", "日本", "ネコ", "水", "富士山", "イネ", "東京", "チョコレート", "野球"],
+      normal: ["織田信長", "恐竜", "相対性理論", "フランス革命", "人工知能", "古代エジプト", "深海", "抗生物質"],
+      hard: ["量子力学", "産業革命", "バベルの塔", "冷戦", "素数", "クフ王のピラミッド", "ルネサンス"],
+      pr: ["地球", "恐竜", "月", "太陽系", "ピラミッド", "織田信長", "富士山"]
+    };
+
     window.escapeHtml = function(str) {
       if(!str) return '';
       return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
     }
 
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // kuromoji の事前初期化
+    function initKuromoji() {
+      if (typeof kuromoji === 'undefined') return;
+      kuromoji.builder({ dicPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict" })
+        .build((err, tokenizer) => {
+          if (!err) {
+            kuromojiTokenizer = tokenizer;
+          }
+        });
+    }
+
+    // questions.json の事前読み込み
+    async function loadQuestionsJson() {
+      try {
+        const res = await fetch('./questions.json');
+        if (res.ok) {
+          questionsData = await res.json();
+        }
+      } catch (e) {
+        console.warn("questions.json could not be loaded, using fallback:", e);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const picker = document.getElementById('daily-date-picker');
+      picker.value = getTodayString();
+      picker.max = getTodayString();
+      initKuromoji();
+      loadQuestionsJson();
+    });
+
+    // PRNG (Mulberry32)
+    function mulberry32(a) {
+      return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      }
+    }
+
+    function getSeedFromDateString(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    }
+
     function toggleMode() {
       const mode = document.querySelector('input[name="game-mode"]:checked').value;
-      const diffWrapper = document.getElementById('difficulty-wrapper');
-      diffWrapper.style.display = (mode === 'curated') ? 'block' : 'none';
+      document.getElementById('difficulty-wrapper').style.display = (mode === 'curated') ? 'block' : 'none';
+      document.getElementById('daily-wrapper').style.display = (mode === 'daily') ? 'block' : 'none';
+      document.getElementById('genre-wrapper').style.display = (mode === 'genre') ? 'block' : 'none';
     }
 
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
-    function toggleMute() { isMuted = !isMuted; document.getElementById('mute-btn').textContent = isMuted ? '🔇' : '🔊'; }
+    function toggleMute() { 
+      isMuted = !isMuted; 
+      const volIcon = document.getElementById('vol-icon');
+      if (isMuted) {
+        volIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+      } else {
+        volIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+      }
+    }
     function playTone(freq, type, duration, vol) {
       if (isMuted || !audioCtx) return;
       const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
@@ -350,43 +603,135 @@
     }
     function normalizeText(str) { let res = ''; for(let i=0; i<str.length; i++) res += normalizeChar(str[i]); return res; }
 
+    // お題・本文の取得（questions.json 連動 & フォールバック）
     async function fetchArticle(mode) {
       let playedHistory = JSON.parse(sessionStorage.getItem('wikinator_history') || '[]');
 
       for (let attempt = 0; attempt < 15; attempt++) {
         try {
-          let endpoint = ''; let diffName = '';
-          
-          if (mode === 'curated') {
+          let endpoint = ''; 
+          let diffName = '';
+          let dailyDateFormatted = '';
+          let targetTitle = '';
+          let aiHints = [];
+
+          // 1. デイリー問題モード
+          if (mode === 'daily') {
+            const pickerVal = document.getElementById('daily-date-picker').value || getTodayString();
+            dailyDateFormatted = pickerVal.replace(/-/g, '/');
+            const isToday = (pickerVal === getTodayString());
+
+            // questions.json のチェック
+            if (isToday && questionsData?.daily) {
+              const item = questionsData.daily;
+              targetTitle = typeof item === 'string' ? item : item.title;
+              if (item.hints) aiHints = item.hints;
+            } else if (questionsData?.archives?.[pickerVal]) {
+              const item = questionsData.archives[pickerVal];
+              targetTitle = typeof item === 'string' ? item : item.title;
+              if (item.hints) aiHints = item.hints;
+            }
+
+            // フォールバック: 日付シードPRNG
+            if (!targetTitle) {
+              const pool = ["地球", "太陽", "月", "水", "空気", "火", "海", "日本", "東京", "富士山", "織田信長", "恐竜", "相対性理論", "フランス革命", "人工知能", "古代エジプト", "量子力学", "産業革命", "冷戦", "素数"];
+              const seed = getSeedFromDateString(pickerVal);
+              const rng = mulberry32(seed);
+              targetTitle = pool[Math.floor(rng() * pool.length)];
+            }
+
+            endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
+          }
+          // 2. 厳選記事モード
+          else if (mode === 'curated') {
             const diff = document.getElementById('difficulty-select').value;
-            if (diff === 'easy') diffName = '初級'; else if (diff === 'normal') diffName = '中級'; else if (diff === 'hard') diffName = '上級'; else diffName = '不可能';
-            
-            let targetTitle = "地球"; 
-            if(window.firebaseDB) {
-              const { get, ref } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js");
-              const countSnap = await get(ref(window.firebaseDB, `curated_meta/${diff}_count`));
-              const maxCount = countSnap.val();
-              if (maxCount) {
-                for(let i=0; i<10; i++) {
-                  let r = Math.floor(Math.random() * maxCount);
-                  let wordSnap = await get(ref(window.firebaseDB, `curated_lists/${diff}/${r}`));
-                  let fetchedTitle = wordSnap.val();
-                  if (fetchedTitle && !playedHistory.includes(fetchedTitle)) {
-                    targetTitle = fetchedTitle;
-                    break;
-                  }
-                  if (fetchedTitle) targetTitle = fetchedTitle; 
-                }
+            if (diff === 'easy') diffName = '初級'; 
+            else if (diff === 'normal') diffName = '中級'; 
+            else if (diff === 'hard') diffName = '上級'; 
+            else if (diff === 'pr') diffName = '不可能';
+            else diffName = diff;
+
+            // questions.json から取得
+            if (questionsData?.difficulty?.[diff]) {
+              const list = questionsData.difficulty[diff];
+              if (Array.isArray(list) && list.length > 0) {
+                let available = list.filter(item => {
+                  const t = typeof item === 'string' ? item : item.title;
+                  return !playedHistory.includes(t);
+                });
+                if (available.length === 0) available = list;
+                const chosen = available[Math.floor(Math.random() * available.length)];
+                targetTitle = typeof chosen === 'string' ? chosen : chosen.title;
+                if (chosen.hints) aiHints = chosen.hints;
               }
             }
-            endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
-          } else if (mode === 'random') {
+
+            // Firebase から取得（フォールバック）
+            if (!targetTitle && window.firebaseDB) {
+              try {
+                const { get, ref } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js");
+                const listSnap = await get(ref(window.firebaseDB, `curated_lists/${diff}`));
+                const rawList = listSnap.val();
+                if (rawList) {
+                  const list = Array.isArray(rawList) ? rawList.filter(Boolean) : Object.values(rawList);
+                  if (list.length > 0) {
+                    let available = list.filter(t => !playedHistory.includes(t));
+                    if (available.length === 0) available = list;
+                    targetTitle = available[Math.floor(Math.random() * available.length)];
+                  }
+                }
+              } catch (e) { console.warn("Firebase fetch error:", e); }
+            }
+
+            // 内蔵リストフォールバック
+            if (!targetTitle) {
+              const fList = fallbackCuratedPool[diff] || fallbackCuratedPool['easy'];
+              let available = fList.filter(t => !playedHistory.includes(t));
+              if (available.length === 0) available = fList;
+              targetTitle = available[Math.floor(Math.random() * available.length)];
+            }
+
+            endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
+          }
+          // 3. ジャンル別モード
+          else if (mode === 'genre') {
+            const genre = document.getElementById('genre-select').value;
+            const genreLabels = { history: '歴史', science: '科学', geo: '地理', anime: 'アニメ', culture: '文化' };
+            diffName = genreLabels[genre] || genre;
+
+            // questions.json から取得
+            if (questionsData?.genres?.[genre]) {
+              const list = questionsData.genres[genre];
+              if (Array.isArray(list) && list.length > 0) {
+                let available = list.filter(item => {
+                  const t = typeof item === 'string' ? item : item.title;
+                  return !playedHistory.includes(t);
+                });
+                if (available.length === 0) available = list;
+                const chosen = available[Math.floor(Math.random() * available.length)];
+                targetTitle = typeof chosen === 'string' ? chosen : chosen.title;
+                if (chosen.hints) aiHints = chosen.hints;
+              }
+            }
+
+            // フォールバック（ジャンル別規定単語）
+            if (!targetTitle) {
+              const genreFallbacks = {
+                history: ["織田信長", "フランス革命", "産業革命", "明治維新", "冷戦"],
+                science: ["相対性理論", "量子力学", "人工知能", "ブラックホール", "DNA"],
+                geo: ["富士山", "サハラ砂漠", "アマゾン川", "エベレスト", "南極大陸"],
+                anime: ["ポケットモンスター", "ドラゴンボール", "スタジオジブリ", "千と千尋の神隠し", "スーパーマリオ"],
+                culture: ["ルネサンス", "モナ・リザ", "シェイクスピア", "古典音楽", "歌舞伎"]
+              };
+              const gList = genreFallbacks[genre] || genreFallbacks['history'];
+              targetTitle = gList[Math.floor(Math.random() * gList.length)];
+            }
+
+            endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
+          }
+          // 4. 完全ランダムモード
+          else {
             endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=10&prop=extracts|links&explaintext=1&pllimit=max&plnamespace=0&origin=*&format=json`;
-          } else {
-            const chars = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            const randChar = chars[Math.floor(Math.random() * chars.length)];
-            const catMode = ['Category:良質な記事', 'Category:秀逸な記事'][Math.floor(Math.random() * 2)];
-            endpoint = `https://ja.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=${encodeURIComponent(catMode)}&gcmnamespace=0&gcmlimit=50&gcmstartsortkeyprefix=${encodeURIComponent(randChar)}&prop=extracts|categories|links&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
           }
 
           const res = await fetch(endpoint);
@@ -395,10 +740,13 @@
           if (data && data.query && data.query.pages) {
             let pages = Object.values(data.query.pages).sort(() => Math.random() - 0.5);
             for (const p of pages) {
-              if (!p.extract || p.extract.length < 500 || p.title.includes('曖昧さ回避') || p.title.includes('一覧')) continue;
+              if (!p || p.missing !== undefined) continue;
+
+              const minLen = (mode === 'random') ? 500 : 200;
+              if (!p.extract || p.extract.length < minLen || p.title.includes('曖昧さ回避') || p.title.includes('一覧')) continue;
               const cleanTitle = p.title.replace(/\s*\(.*?\)$/, '');
               
-              if (mode !== 'curated' && playedHistory.includes(cleanTitle)) continue;
+              if (mode === 'random' && playedHistory.includes(cleanTitle)) continue;
 
               let extractedHints = [];
               const normExtract = normalizeText(p.extract);
@@ -414,19 +762,33 @@
               sessionStorage.setItem('wikinator_history', JSON.stringify(playedHistory));
 
               let finalModeName = '';
-              if (mode === 'random') finalModeName = '完全ランダム';
+              if (mode === 'daily') finalModeName = `デイリー問題 (${dailyDateFormatted})`;
+              else if (mode === 'random') finalModeName = '完全ランダム';
               else if (mode === 'curated') finalModeName = `厳選記事 (${diffName})`;
-              else finalModeName = '良質な記事';
+              else if (mode === 'genre') finalModeName = `ジャンル別 (${diffName})`;
 
               return {
                 title: p.title, cleanTitle: cleanTitle, extract: p.extract, normalizedExtract: normExtract, normalizedCleanTitle: normTitle,
-                url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`, modeName: finalModeName, hints: extractedHints
+                url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`, modeName: finalModeName,
+                hints: extractedHints,
+                aiHints: aiHints
               };
             }
           }
         } catch(e) { console.error(e); }
       }
-      return fetchArticle('quality'); 
+
+      // 最終フォールバック
+      const fallbackTitle = "地球";
+      const res = await fetch(`https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(fallbackTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`);
+      const data = await res.json();
+      const p = Object.values(data.query.pages)[0];
+      return {
+        title: p.title, cleanTitle: p.title, extract: p.extract,
+        normalizedExtract: normalizeText(p.extract), normalizedCleanTitle: normalizeText(p.title),
+        url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
+        modeName: '厳選記事 (初級)', hints: [], aiHints: ["惑星", "太陽系", "生命"]
+      };
     }
 
     async function startGame() {
@@ -434,8 +796,10 @@
       const mode = document.querySelector('input[name="game-mode"]:checked').value;
       
       let loadingText = 'Wikipediaから記事全文を取得しています...';
-      if(mode === 'random') loadingText = '完全ランダム記事を探しています...';
-      else if(mode === 'curated') loadingText = 'リストから厳選されたお題を取得しています...';
+      if(mode === 'daily') loadingText = '本日のデイリー問題を取得しています...';
+      else if(mode === 'random') loadingText = '完全ランダム記事を探しています...';
+      else if(mode === 'curated') loadingText = '厳選お題を取得しています...';
+      else if(mode === 'genre') loadingText = '指定ジャンルの記事を取得しています...';
       
       document.getElementById('loading-msg').textContent = loadingText;
       document.getElementById('setup-view').style.display = 'none';
@@ -445,6 +809,16 @@
       charRevealed = new Uint16Array(currentArticle.extract.length);
       hintCandidates = currentArticle.hints; 
       
+      // リセット
+      helperParticleUsed = false;
+      helperNumberUsed = false;
+      document.getElementById('helper-particle-btn').disabled = false;
+      document.getElementById('helper-number-btn').disabled = false;
+      document.getElementById('docked-hints-container').style.display = 'none';
+      document.getElementById('docked-hints-list').innerHTML = '';
+      document.getElementById('docked-result-actions').style.display = 'none';
+      closeNav();
+
       document.getElementById('loading-view').style.display = 'none';
       document.getElementById('game-view').style.display = 'block';
       document.getElementById('bottom-panel').style.display = 'flex';
@@ -491,56 +865,179 @@
       return true;
     }
 
-    // --- ヒントの3段階化 ---
+    // --- 【改善1】お助け機能: 付属語OPEN (kuromoji形態素解析による誤爆ゼロ判定) ---
+    async function openParticles() {
+      if (isGameOver || helperParticleUsed) return;
+      helperParticleUsed = true;
+      document.getElementById('helper-particle-btn').disabled = true;
+      initAudio();
+      playClick();
+
+      // kuromoji のロード完了を待機
+      if (!kuromojiTokenizer) {
+        showToast("形態素解析エンジンをロード中...");
+        try {
+          kuromojiTokenizer = await new Promise((resolve, reject) => {
+            if (typeof kuromoji === 'undefined') return reject("kuromoji is not defined");
+            kuromoji.builder({ dicPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict" })
+              .build((err, tokenizer) => {
+                if (err) reject(err);
+                else resolve(tokenizer);
+              });
+          });
+        } catch (e) {
+          console.warn("kuromoji loading failed, falling back to segmenter:", e);
+        }
+      }
+
+      currentTurn++;
+      let hitCount = 0;
+      const text = currentArticle.extract;
+
+      if (kuromojiTokenizer) {
+        try {
+          // 記事本文を高精度に品詞分解
+          const tokens = kuromojiTokenizer.tokenize(text);
+          for (const token of tokens) {
+            // 品詞が助詞または助動詞のトークンのみを厳密に対象化
+            if (token.pos === '助詞' || token.pos === '助動詞') {
+              const start = token.word_position - 1; // 1-based to 0-based
+              const len = token.surface_form.length;
+              for (let j = 0; j < len; j++) {
+                if (start + j < charRevealed.length) {
+                  charRevealed[start + j] = currentTurn;
+                }
+              }
+              hitCount++;
+            }
+          }
+        } catch (err) {
+          console.error("kuromoji tokenization failed:", err);
+        }
+      } else {
+        // 万が一のフォールバック (Intl.Segmenter)
+        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+          const segmenter = new Intl.Segmenter('ja-JP', { granularity: 'word' });
+          const particles = new Set(['は', 'が', 'を', 'に', 'へ', 'と', 'から', 'より', 'で', 'や', 'の', 'も', 'ね', 'よ', 'か', 'な', 'ぞ', 'さ', 'し', 'ば', 'て', 'ても', 'けれど', 'けれども', 'のに', 'ので', 'なら', 'たら', 'たり', 'だの', 'なり', 'やら', 'きり', 'さえ', 'すら', 'こそ', 'ばかり', 'まで', 'など', 'くらい', 'ぐらい', 'ほど']);
+          const auxiliaries = new Set(['です', 'ます', 'だ', 'た', 'ない', 'れる', 'られる', 'せる', 'させる', 'たい', 'らしい', 'ようだ', 'そうだ', 'ぬ', 'ん', 'まい', 'よう', 'そう', 'たら', 'だろ', 'でし', 'ませ']);
+          const segments = segmenter.segment(text);
+          for (const seg of segments) {
+            const w = seg.segment;
+            if (particles.has(w) || auxiliaries.has(w)) {
+              for (let j = 0; j < w.length; j++) {
+                charRevealed[seg.index + j] = currentTurn;
+              }
+              hitCount++;
+            }
+          }
+        }
+      }
+
+      showToast(`付属語（助詞・助動詞）を一括開示しました (-1000点)`);
+      updateArticlePreview(currentTurn);
+    }
+
+    // --- お助け機能: 数字OPEN ---
+    function openNumbers() {
+      if (isGameOver || helperNumberUsed) return;
+      helperNumberUsed = true;
+      document.getElementById('helper-number-btn').disabled = true;
+      initAudio();
+      playClick();
+
+      currentTurn++;
+      const numRegex = /[0-9０-９〇一二三四五六七八九十百千万億兆京]/;
+      const text = currentArticle.extract;
+      let hitCount = 0;
+      for (let i = 0; i < text.length; i++) {
+        if (numRegex.test(text[i])) {
+          charRevealed[i] = currentTurn;
+          hitCount++;
+        }
+      }
+
+      showToast(`数字（アラビア・漢数字）を一括開示しました (-500点)`);
+      updateArticlePreview(currentTurn);
+    }
+
+    // --- 【改善2】ヒントの3段階化（AI厳選キーワード優先連動） ---
     function useHint() {
       if (isGameOver || hintsUsed >= MAX_HINTS) return;
       
       hintsUsed++;
       playClick();
 
-      document.getElementById('revealed-hints-box').style.display = 'flex';
-      const listElem = document.getElementById('revealed-hints-list');
+      const dockedBox = document.getElementById('docked-hints-container');
+      const dockedList = document.getElementById('docked-hints-list');
+      dockedBox.style.display = 'block';
       
       let toastMsg = "";
 
       if (hintsUsed === 1) {
         const length = currentArticle.cleanTitle.length;
         const p = document.createElement('div');
-        p.style.marginBottom = "6px";
-        p.innerHTML = `<strong>第1ヒント:</strong> タイトルは <strong>${length}</strong> 文字です`;
-        listElem.appendChild(p);
-        toastMsg = `💡 第1ヒントを開示しました (${hintsUsed}/${MAX_HINTS})`;
+        p.style.marginBottom = "2px";
+        p.innerHTML = `<strong>ヒント1:</strong> タイトルは <strong>${length}</strong> 文字です`;
+        dockedList.appendChild(p);
+        toastMsg = `第1ヒント（文字数）を開示しました (${hintsUsed}/${MAX_HINTS})`;
       } 
       else if (hintsUsed === 2) {
         let hintWord = '';
-        const availableHints = hintCandidates.filter(c => { const norm = normalizeText(c); return !attempts.some(a => a.norm === norm); });
-        if (availableHints.length > 0) {
-          hintWord = availableHints[Math.floor(Math.random() * availableHints.length)];
-        } else {
+        const normTitle = currentArticle.normalizedCleanTitle;
+
+        // 1. questions.json の AI厳選キーワードから優先選定
+        if (currentArticle.aiHints && currentArticle.aiHints.length > 0) {
+          const availableAiHints = currentArticle.aiHints.filter(c => {
+            const norm = normalizeText(c);
+            if (norm.includes(normTitle) || normTitle.includes(norm)) return false;
+            return !attempts.some(a => a.norm === norm);
+          });
+          if (availableAiHints.length > 0) {
+            hintWord = availableAiHints[Math.floor(Math.random() * availableAiHints.length)];
+          }
+        }
+
+        // 2. なければ Wikipedia の関連リンクから選定
+        if (!hintWord && hintCandidates.length > 0) {
+          const availableHints = hintCandidates.filter(c => {
+            const norm = normalizeText(c);
+            if (norm.includes(normTitle) || normTitle.includes(norm)) return false;
+            return !attempts.some(a => a.norm === norm);
+          });
+          if (availableHints.length > 0) {
+            hintWord = availableHints[Math.floor(Math.random() * availableHints.length)];
+          }
+        }
+
+        // 3. 最終フォールバック
+        if (!hintWord) {
           hintWord = currentArticle.extract.replace(/\s/g,'').substring(50, 55);
         }
         
         processGuess(hintWord, true);
 
         const p = document.createElement('div');
-        p.style.marginBottom = "6px";
-        p.innerHTML = `<strong>第2ヒント (キーワード):</strong> <span class="hint-badge">${escapeHtml(hintWord)}</span>`;
-        listElem.appendChild(p);
-        toastMsg = `💡 キーワード「${hintWord}」を開示しました (${hintsUsed}/${MAX_HINTS})`;
+        p.style.marginBottom = "2px";
+        p.innerHTML = `<strong>ヒント2 (重要語):</strong> <span class="hint-badge">${escapeHtml(hintWord)}</span>`;
+        dockedList.appendChild(p);
+        toastMsg = `第2ヒント（重要語「${hintWord}」）を開示しました (${hintsUsed}/${MAX_HINTS})`;
       } 
       else if (hintsUsed === 3) {
         const firstChar = currentArticle.cleanTitle.charAt(0);
         const p = document.createElement('div');
-        p.style.marginBottom = "6px";
-        p.innerHTML = `<strong>第3ヒント:</strong> タイトルの最初の文字は『 <strong>${escapeHtml(firstChar)}</strong> 』です`;
-        listElem.appendChild(p);
-        toastMsg = `💡 第3ヒントを開示しました (${hintsUsed}/${MAX_HINTS})`;
+        p.style.marginBottom = "2px";
+        p.innerHTML = `<strong>ヒント3:</strong> 頭文字は『 <strong>${escapeHtml(firstChar)}</strong> 』です`;
+        dockedList.appendChild(p);
+        toastMsg = `第3ヒント（頭文字）を開示しました (${hintsUsed}/${MAX_HINTS})`;
       }
 
       showToast(toastMsg);
       
       const remain = MAX_HINTS - hintsUsed;
-      document.getElementById('hint-btn').innerHTML = `💡 ヒント開示(${remain})`;
+      document.getElementById('hint-btn').innerHTML = `
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17h8v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"></path></svg>
+        ヒント(${remain})
+      `;
       if (hintsUsed >= MAX_HINTS) document.getElementById('hint-btn').disabled = true;
     }
 
@@ -559,7 +1056,7 @@
         if (item.count > 0 && item.count < 5) bClass = 'badge-low';
         else if (item.count >= 5 && item.count < 20) bClass = 'badge-mid';
         else if (item.count >= 20) bClass = 'badge-high';
-        const hintMark = item.isHint ? ' <span style="font-size:0.8em; color:var(--ooui-blue);">[💡ヒント]</span>' : '';
+        const hintMark = item.isHint ? ' <span style="font-size:0.8em; color:var(--ooui-blue);">[ヒント]</span>' : '';
         return `<li class="toc-item ${item.hit?'hit':'miss'}" onclick="highlightTurn(${item.turn})">
           <span class="toc-word">${escapeHtml(item.word)}${hintMark}</span>
           <span class="toc-badge ${bClass}">${item.count}回</span></li>`;
@@ -579,7 +1076,9 @@
             const turn = charRevealed[i]; const isLatest = (turn === latestTurn); let idStr = '';
             if (isLatest && !addedLatestId) { idStr = ' id="latest-hit"'; addedLatestId = true; }
             html.push(`<span class="revealed turn-${turn} ${isLatest ? 'revealed-latest' : ''}"${idStr}>${escapeHtml(text[i])}</span>`);
-          } else { html.push(escapeHtml(text[i])); }
+          } else {
+            html.push(escapeHtml(text[i]));
+          }
         }
       }
       document.getElementById('article-preview').innerHTML = html.join('');
@@ -588,15 +1087,74 @@
 
     function scrollToLatest() { const el = document.getElementById('latest-hit'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 
+    // --- 永続ハイライト & 前後ジャンプナビ ---
     window.highlightTurn = function(turn) {
-      document.querySelectorAll('.highlight-click').forEach(el => el.classList.remove('highlight-click'));
-      const els = document.querySelectorAll(`.turn-${turn}`);
-      if (els.length > 0) {
-        els[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        els.forEach(el => el.classList.add('highlight-click'));
-        setTimeout(() => { els.forEach(el => el.classList.remove('highlight-click')); }, 2000);
-      } else { showToast("その単語は本文中に存在しません"); }
+      const item = attempts.find(a => a.turn === turn);
+      if (!item || !item.hit) {
+        showToast("その単語は本文中に存在しません");
+        closeNav();
+        return;
+      }
+
+      document.querySelectorAll('.highlight-active').forEach(el => el.classList.remove('highlight-active'));
+      const els = Array.from(document.querySelectorAll(`.turn-${turn}`));
+      if (els.length === 0) return;
+
+      els.forEach(el => el.classList.add('highlight-active'));
+
+      const wordLen = item.word.length;
+      const targetGroupSpans = [];
+      for (let i = 0; i < els.length; i += wordLen) {
+        targetGroupSpans.push(els[i]);
+      }
+
+      currentNavIndices = targetGroupSpans;
+      currentNavCurrentPos = 0;
+      currentNavWord = item.word;
+
+      showNavControls();
+      jumpToNavPos(0);
     };
+
+    function showNavControls() {
+      const navBox = document.getElementById('jump-nav-box');
+      if (currentNavIndices.length > 0) {
+        navBox.style.display = 'flex';
+        updateNavUI();
+      } else {
+        navBox.style.display = 'none';
+      }
+    }
+
+    function updateNavUI() {
+      document.getElementById('nav-info-text').textContent = `「${escapeHtml(currentNavWord)}」 ${currentNavCurrentPos + 1} / ${currentNavIndices.length} 件`;
+    }
+
+    function nextNav() {
+      if (currentNavIndices.length === 0) return;
+      currentNavCurrentPos = (currentNavCurrentPos + 1) % currentNavIndices.length;
+      jumpToNavPos(currentNavCurrentPos);
+    }
+
+    function prevNav() {
+      if (currentNavIndices.length === 0) return;
+      currentNavCurrentPos = (currentNavCurrentPos - 1 + currentNavIndices.length) % currentNavIndices.length;
+      jumpToNavPos(currentNavCurrentPos);
+    }
+
+    function jumpToNavPos(pos) {
+      const el = currentNavIndices[pos];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      updateNavUI();
+    }
+
+    function closeNav() {
+      document.getElementById('jump-nav-box').style.display = 'none';
+      document.querySelectorAll('.highlight-active').forEach(el => el.classList.remove('highlight-active'));
+      currentNavIndices = [];
+    }
 
     function giveUp() { if (isGameOver) return; if (!confirm('ギブアップして答えを見ますか？')) return; endGame(false); }
 
@@ -604,6 +1162,8 @@
       isGameOver = true;
       document.getElementById('word-input').blur(); document.getElementById('word-input').disabled = true;
       document.getElementById('submit-btn').disabled = true; document.getElementById('hint-btn').disabled = true; document.getElementById('giveup-btn').disabled = true;
+      document.getElementById('helper-particle-btn').disabled = true; document.getElementById('helper-number-btn').disabled = true;
+      closeNav();
       
       const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
       const minutes = Math.floor(elapsedSeconds / 60); const seconds = elapsedSeconds % 60;
@@ -612,8 +1172,13 @@
       let finalScore = 0;
       if (isClear) {
         const manualAttempts = attempts.filter(a => !a.isHint).length;
-        const penaltyAttempts = manualAttempts * 50; const penaltyHints = hintsUsed * 500; const penaltyTime = elapsedSeconds * 5;
-        finalScore = Math.max(100, 10000 - penaltyAttempts - penaltyHints - penaltyTime);
+        const penaltyAttempts = manualAttempts * 50; 
+        const penaltyHints = hintsUsed * 500; 
+        const penaltyTime = elapsedSeconds * 5;
+        let penaltyHelpers = 0;
+        if (helperParticleUsed) penaltyHelpers += 1000;
+        if (helperNumberUsed) penaltyHelpers += 500;
+        finalScore = Math.max(100, 10000 - penaltyAttempts - penaltyHints - penaltyTime - penaltyHelpers);
       }
       window.currentScore = finalScore; window.currentTimeStr = timeStr;
 
@@ -621,22 +1186,36 @@
 
       const ambox = document.getElementById('result-ambox');
       ambox.className = `ambox ${isClear ? 'ambox-success' : 'ambox-danger'}`;
-      document.getElementById('result-icon').textContent = isClear ? '🎉' : '🏳️';
+      
+      const resIcon = document.getElementById('result-icon');
+      if (isClear) {
+        resIcon.innerHTML = '<svg class="svg-icon" style="width:32px;height:32px;stroke:var(--ambox-green);" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+      } else {
+        resIcon.innerHTML = '<svg class="svg-icon" style="width:32px;height:32px;stroke:var(--ambox-red);" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>';
+      }
+
       document.getElementById('result-title').textContent = isClear ? '見事正解です！' : 'ギブアップしました。';
       document.getElementById('result-time').textContent = timeStr; document.getElementById('result-score').textContent = finalScore;
       document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.9rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${escapeHtml(currentArticle.modeName)}</span>`;
-      document.getElementById('result-link').href = currentArticle.url;
       
+      // 常時固定の下部パネルにも終了後アクションを表示
+      const shareUrl = "https://t-sukuea-latatalas.github.io/Wikinator/";
+      let shareText = '';
+      if (isClear) {
+        shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n得点："${finalScore}"点\nタイム："${timeStr}"\n${shareUrl}\n#Wikinator`;
+      } else {
+        shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n\nクリアならず\n\n${shareUrl}\n#Wikinator`;
+      }
+      
+      const xIntentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+      document.getElementById('docked-share-x-btn').href = xIntentUrl;
+      document.getElementById('docked-result-link').href = currentArticle.url;
+      document.getElementById('docked-result-actions').style.display = 'flex';
+
       document.getElementById('result-ranking-wrapper').appendChild(document.getElementById('ranking-section'));
       if(isClear) document.getElementById('ranking-form').style.display = 'flex';
       if(window.loadLeaderboard) window.loadLeaderboard();
 
-      const shareUrl = "https://t-sukuea-latatalas.github.io/Wikinator/";
-      let shareText = '';
-      if (isClear) shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n得点："${finalScore}"点\nタイム："${timeStr}"\n${shareUrl}\n#Wikinator`;
-      else shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n\nクリアならず\n\n${shareUrl}\n#Wikinator`;
-      
-      document.getElementById('share-x-btn').href = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
       ambox.style.display = 'flex';
       if (isClear) { playClear(); startConfetti(); } else { playGiveup(); }
       window.scrollTo({ top: 0, behavior: 'smooth' });
