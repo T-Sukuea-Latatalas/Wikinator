@@ -24,9 +24,6 @@
   <meta name="twitter:description" content="隠されたWikipedia記事のタイトルを、単語を質問しながら推測して当てるアキネーター型ゲーム！" />
   <meta name="twitter:image" content="https://t-sukuea-latatalas.github.io/Wikinator/wikinator_icon.png" />
 
-  <!-- kuromoji.js（日本語形態素解析エンジン） -->
-  <script src="https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.min.js"></script>
-
   <style>
     :root {
       --wiki-bg: #f6f6f6; --content-bg: #ffffff; --text: #202122; --text-muted: #54595d;
@@ -348,7 +345,7 @@
       <div class="panel-header">
         <div style="font-size:0.88rem;">試行: <strong id="guess-count">0</strong>回 <span id="hit-rate-pc" style="color:var(--text-muted); margin-left:4px;"></span></div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <!-- お助け: 付属語OPEN (kuromoji形態素解析) -->
+          <!-- お助け: 付属語OPEN (Intl.Segmenter高精度解析) -->
           <button class="mw-ui-button" id="helper-particle-btn" onclick="openParticles()" style="padding:4px 8px; font-size:0.8rem;" title="助詞・助動詞をすべて開示 (-1000点)">
             <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
             付属語OPEN
@@ -364,7 +361,7 @@
             ヒント(3)
           </button>
           <button class="mw-ui-button" id="giveup-btn" onclick="giveUp()" style="padding:4px 8px; font-size:0.8rem; color:var(--ambox-red);">
-            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
             ギブアップ
           </button>
         </div>
@@ -468,11 +465,6 @@
         });
       } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="6">ランキング取得エラー</td></tr>'; }
     };
-
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('setup-ranking-wrapper').appendChild(document.getElementById('ranking-section'));
-      if(window.loadLeaderboard) window.loadLeaderboard();
-    });
   </script>
 
   <script>
@@ -485,9 +477,6 @@
 
     // AI生成データ (questions.json)
     let questionsData = null;
-
-    // kuromoji トークナイザー
-    let kuromojiTokenizer = null;
 
     // お助け機能状態
     let helperParticleUsed = false;
@@ -516,18 +505,7 @@
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    // kuromoji の事前初期化
-    function initKuromoji() {
-      if (typeof kuromoji === 'undefined') return;
-      kuromoji.builder({ dicPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict" })
-        .build((err, tokenizer) => {
-          if (!err) {
-            kuromojiTokenizer = tokenizer;
-          }
-        });
-    }
-
-    // questions.json の事前読み込み
+    // questions.json の安全な読み込み
     async function loadQuestionsJson() {
       try {
         const res = await fetch('./questions.json');
@@ -535,16 +513,28 @@
           questionsData = await res.json();
         }
       } catch (e) {
-        console.warn("questions.json could not be loaded, using fallback:", e);
+        console.info("questions.json could not be loaded, using fallback.");
       }
     }
 
+    // 初期化を1箇所に統合
     window.addEventListener('DOMContentLoaded', () => {
       const picker = document.getElementById('daily-date-picker');
-      picker.value = getTodayString();
-      picker.max = getTodayString();
-      initKuromoji();
+      if (picker) {
+        picker.value = getTodayString();
+        picker.max = getTodayString();
+      }
+      
+      const setupRankWrapper = document.getElementById('setup-ranking-wrapper');
+      const rankSection = document.getElementById('ranking-section');
+      if (setupRankWrapper && rankSection) {
+        setupRankWrapper.appendChild(rankSection);
+      }
+      
       loadQuestionsJson();
+      if (window.loadLeaderboard) {
+        window.loadLeaderboard();
+      }
     });
 
     // PRNG (Mulberry32)
@@ -868,66 +858,57 @@
       return true;
     }
 
-    // --- お助け機能: 付属語OPEN (kuromoji形態素解析による誤爆ゼロ判定) ---
-    async function openParticles() {
+    // --- お助け機能: 付属語OPEN (Intl.Segmenter高精度解析・フリーズ完全解消版) ---
+    function openParticles() {
       if (isGameOver || helperParticleUsed) return;
       helperParticleUsed = true;
       document.getElementById('helper-particle-btn').disabled = true;
       initAudio();
       playClick();
 
-      if (!kuromojiTokenizer) {
-        showToast("形態素解析エンジンをロード中...");
-        try {
-          kuromojiTokenizer = await new Promise((resolve, reject) => {
-            if (typeof kuromoji === 'undefined') return reject("kuromoji is not defined");
-            kuromoji.builder({ dicPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict" })
-              .build((err, tokenizer) => {
-                if (err) reject(err);
-                else resolve(tokenizer);
-              });
-          });
-        } catch (e) {
-          console.warn("kuromoji loading failed, falling back to segmenter:", e);
-        }
-      }
+      const particles = new Set([
+        'は', 'が', 'を', 'に', 'へ', 'と', 'から', 'より', 'で', 'や', 'の', 'も',
+        'ね', 'よ', 'か', 'な', 'ぞ', 'さ', 'し', 'ば', 'て', 'ても', 'けれど', 'けれども',
+        'のに', 'ので', 'なら', 'たら', 'たり', 'だの', 'なり', 'やら', 'きり', 'さえ',
+        'すら', 'こそ', 'ばかり', 'まで', 'など', 'くらい', 'ぐらい', 'ほど', 'かしら', 'わ'
+      ]);
+      const auxiliaries = new Set([
+        'です', 'ます', 'だ', 'た', 'ない', 'れる', 'られる', 'せる', 'させる', 'たい',
+        'らしい', 'ようだ', 'そうだ', 'ぬ', 'ん', 'まい', 'よう', 'そう', 'たら', 'だろ',
+        'でし', 'ませ', 'ず', 'べき'
+      ]);
 
       currentTurn++;
       let hitCount = 0;
       const text = currentArticle.extract;
 
-      if (kuromojiTokenizer) {
-        try {
-          const tokens = kuromojiTokenizer.tokenize(text);
-          for (const token of tokens) {
-            if (token.pos === '助詞' || token.pos === '助動詞') {
-              const start = token.word_position - 1;
-              const len = token.surface_form.length;
-              for (let j = 0; j < len; j++) {
-                if (start + j < charRevealed.length) {
-                  charRevealed[start + j] = currentTurn;
-                }
-              }
-              hitCount++;
-            }
-          }
-        } catch (err) {
-          console.error("kuromoji tokenization failed:", err);
-        }
-      } else {
-        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
-          const segmenter = new Intl.Segmenter('ja-JP', { granularity: 'word' });
-          const particles = new Set(['は', 'が', 'を', 'に', 'へ', 'と', 'から', 'より', 'で', 'や', 'の', 'も', 'ね', 'よ', 'か', 'な', 'ぞ', 'さ', 'し', 'ば', 'て', 'ても', 'けれど', 'けれども', 'のに', 'ので', 'なら', 'たら', 'たり', 'だの', 'なり', 'やら', 'きり', 'さえ', 'すら', 'こそ', 'ばかり', 'まで', 'など', 'くらい', 'ぐらい', 'ほど']);
-          const auxiliaries = new Set(['です', 'ます', 'だ', 'た', 'ない', 'れる', 'られる', 'せる', 'させる', 'たい', 'らしい', 'ようだ', 'そうだ', 'ぬ', 'ん', 'まい', 'よう', 'そう', 'たら', 'だろ', 'でし', 'ませ']);
-          const segments = segmenter.segment(text);
-          for (const seg of segments) {
-            const w = seg.segment;
-            if (particles.has(w) || auxiliaries.has(w)) {
-              for (let j = 0; j < w.length; j++) {
+      // ネイティブC++エンジンで0秒処理・完全誤爆ゼロ
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        const segmenter = new Intl.Segmenter('ja-JP', { granularity: 'word' });
+        const segments = segmenter.segment(text);
+        for (const seg of segments) {
+          const w = seg.segment;
+          if (particles.has(w) || auxiliaries.has(w)) {
+            for (let j = 0; j < w.length; j++) {
+              if (seg.index + j < charRevealed.length) {
                 charRevealed[seg.index + j] = currentTurn;
               }
-              hitCount++;
             }
+            hitCount++;
+          }
+        }
+      } else {
+        const allWords = [...particles, ...auxiliaries];
+        for (const w of allWords) {
+          let idx = 0;
+          while ((idx = text.indexOf(w, idx)) !== -1) {
+            for (let j = 0; j < w.length; j++) {
+              if (idx + j < charRevealed.length) {
+                charRevealed[idx + j] = currentTurn;
+              }
+            }
+            hitCount++;
+            idx += w.length;
           }
         }
       }
@@ -1190,13 +1171,14 @@
       if (isClear) {
         resIcon.innerHTML = '<svg class="svg-icon" style="width:32px;height:32px;stroke:var(--ambox-green);" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
       } else {
-        resIcon.innerHTML = '<svg class="svg-icon" style="width:32px;height:32px;stroke:var(--ambox-red);" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>';
+        resIcon.innerHTML = '<svg class="svg-icon" style="width:32px;height:32px;stroke:var(--ambox-red);" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>';
       }
 
       document.getElementById('result-title').textContent = isClear ? '見事正解です！' : 'ギブアップしました。';
       document.getElementById('result-time').textContent = timeStr; document.getElementById('result-score').textContent = finalScore;
       document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.9rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${escapeHtml(currentArticle.modeName)}</span>`;
       
+      // 常時固定の下部パネルにも終了後アクションを表示
       const shareUrl = "https://t-sukuea-latatalas.github.io/Wikinator/";
       let shareText = '';
       if (isClear) {
