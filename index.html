@@ -48,6 +48,10 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
+    .svg-icon-fill {
+      fill: currentColor;
+      stroke: none;
+    }
 
     #mw-header { max-width: 1000px; margin: 0 auto; padding: 12px 1em 8px; display: flex; align-items: center; justify-content: space-between; }
     .wiki-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
@@ -865,7 +869,7 @@
       return true;
     }
 
-    // --- 【改善1】お助け機能: 付属語OPEN (kuromoji形態素解析による誤爆ゼロ判定) ---
+    // --- お助け機能: 付属語OPEN (kuromoji形態素解析による誤爆ゼロ判定) ---
     async function openParticles() {
       if (isGameOver || helperParticleUsed) return;
       helperParticleUsed = true;
@@ -960,7 +964,7 @@
       updateArticlePreview(currentTurn);
     }
 
-    // --- 【改善2】ヒントの3段階化（AI厳選キーワード優先連動） ---
+    // --- ヒントの3段階化（AI厳選キーワード優先連動） ---
     function useHint() {
       if (isGameOver || hintsUsed >= MAX_HINTS) return;
       
