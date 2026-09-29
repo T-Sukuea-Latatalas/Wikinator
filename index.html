@@ -338,7 +338,7 @@
       <div id="docked-result-actions">
         <button class="mw-ui-button progressive" onclick="location.reload()">次の記事へ</button>
         <a id="docked-share-x-btn" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none; background:#0f1419; color:#fff; border-color:#0f1419;">
-          <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:none; fill:#fff;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg> ポスト
+          <svg class="svg-icon svg-icon-fill" viewBox="0 0 24 24" style="fill:#fff;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg> ポスト
         </a>
         <a id="docked-result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">
           Wikipedia <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
@@ -607,7 +607,33 @@
     }
     function normalizeText(str) { let res = ''; for(let i=0; i<str.length; i++) res += normalizeChar(str[i]); return res; }
 
-    // お題・本文の取得（questions.json 連動 & フォールバック）
+    // questions.json の安全なデータ抽出ヘルパー（配列・オブジェクト両対応）
+    function extractTargetFromData(raw, playedHistory) {
+      if (!raw) return null;
+      let items = [];
+      if (Array.isArray(raw)) {
+        items = raw;
+      } else if (typeof raw === 'object' && raw.title) {
+        items = [raw];
+      } else if (typeof raw === 'string') {
+        items = [{ title: raw, hints: [] }];
+      } else {
+        return null;
+      }
+
+      let available = items.filter(item => {
+        const t = typeof item === 'string' ? item : item.title;
+        return !playedHistory.includes(t);
+      });
+      if (available.length === 0) available = items;
+      const chosen = available[Math.floor(Math.random() * available.length)];
+      if (typeof chosen === 'string') {
+        return { title: chosen, hints: [] };
+      }
+      return { title: chosen.title, hints: chosen.hints || [] };
+    }
+
+    // お題・本文の取得
     async function fetchArticle(mode) {
       let playedHistory = JSON.parse(sessionStorage.getItem('wikinator_history') || '[]');
 
@@ -625,15 +651,12 @@
             dailyDateFormatted = pickerVal.replace(/-/g, '/');
             const isToday = (pickerVal === getTodayString());
 
-            // questions.json のチェック
             if (isToday && questionsData?.daily) {
-              const item = questionsData.daily;
-              targetTitle = typeof item === 'string' ? item : item.title;
-              if (item.hints) aiHints = item.hints;
+              const resObj = extractTargetFromData(questionsData.daily, []);
+              if (resObj) { targetTitle = resObj.title; aiHints = resObj.hints; }
             } else if (questionsData?.archives?.[pickerVal]) {
-              const item = questionsData.archives[pickerVal];
-              targetTitle = typeof item === 'string' ? item : item.title;
-              if (item.hints) aiHints = item.hints;
+              const resObj = extractTargetFromData(questionsData.archives[pickerVal], []);
+              if (resObj) { targetTitle = resObj.title; aiHints = resObj.hints; }
             }
 
             // フォールバック: 日付シードPRNG
@@ -649,28 +672,16 @@
           // 2. 厳選記事モード
           else if (mode === 'curated') {
             const diff = document.getElementById('difficulty-select').value;
-            if (diff === 'easy') diffName = '初級'; 
-            else if (diff === 'normal') diffName = '中級'; 
-            else if (diff === 'hard') diffName = '上級'; 
-            else if (diff === 'pr') diffName = '不可能';
-            else diffName = diff;
+            const diffNames = { easy: '初級', normal: '中級', hard: '上級', pr: '不可能' };
+            diffName = diffNames[diff] || diff;
 
-            // questions.json から取得
+            // questions.json からの取得を試行
             if (questionsData?.difficulty?.[diff]) {
-              const list = questionsData.difficulty[diff];
-              if (Array.isArray(list) && list.length > 0) {
-                let available = list.filter(item => {
-                  const t = typeof item === 'string' ? item : item.title;
-                  return !playedHistory.includes(t);
-                });
-                if (available.length === 0) available = list;
-                const chosen = available[Math.floor(Math.random() * available.length)];
-                targetTitle = typeof chosen === 'string' ? chosen : chosen.title;
-                if (chosen.hints) aiHints = chosen.hints;
-              }
+              const resObj = extractTargetFromData(questionsData.difficulty[diff], playedHistory);
+              if (resObj) { targetTitle = resObj.title; aiHints = resObj.hints; }
             }
 
-            // Firebase から取得（フォールバック）
+            // Firebase からの取得を試行（フォールバック）
             if (!targetTitle && window.firebaseDB) {
               try {
                 const { get, ref } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js");
@@ -703,22 +714,11 @@
             const genreLabels = { history: '歴史', science: '科学', geo: '地理', anime: 'アニメ', culture: '文化' };
             diffName = genreLabels[genre] || genre;
 
-            // questions.json から取得
             if (questionsData?.genres?.[genre]) {
-              const list = questionsData.genres[genre];
-              if (Array.isArray(list) && list.length > 0) {
-                let available = list.filter(item => {
-                  const t = typeof item === 'string' ? item : item.title;
-                  return !playedHistory.includes(t);
-                });
-                if (available.length === 0) available = list;
-                const chosen = available[Math.floor(Math.random() * available.length)];
-                targetTitle = typeof chosen === 'string' ? chosen : chosen.title;
-                if (chosen.hints) aiHints = chosen.hints;
-              }
+              const resObj = extractTargetFromData(questionsData.genres[genre], playedHistory);
+              if (resObj) { targetTitle = resObj.title; aiHints = resObj.hints; }
             }
 
-            // フォールバック（ジャンル別規定単語）
             if (!targetTitle) {
               const genreFallbacks = {
                 history: ["織田信長", "フランス革命", "産業革命", "明治維新", "冷戦"],
@@ -813,7 +813,6 @@
       charRevealed = new Uint16Array(currentArticle.extract.length);
       hintCandidates = currentArticle.hints; 
       
-      // リセット
       helperParticleUsed = false;
       helperNumberUsed = false;
       document.getElementById('helper-particle-btn').disabled = false;
@@ -877,7 +876,6 @@
       initAudio();
       playClick();
 
-      // kuromoji のロード完了を待機
       if (!kuromojiTokenizer) {
         showToast("形態素解析エンジンをロード中...");
         try {
@@ -900,12 +898,10 @@
 
       if (kuromojiTokenizer) {
         try {
-          // 記事本文を高精度に品詞分解
           const tokens = kuromojiTokenizer.tokenize(text);
           for (const token of tokens) {
-            // 品詞が助詞または助動詞のトークンのみを厳密に対象化
             if (token.pos === '助詞' || token.pos === '助動詞') {
-              const start = token.word_position - 1; // 1-based to 0-based
+              const start = token.word_position - 1;
               const len = token.surface_form.length;
               for (let j = 0; j < len; j++) {
                 if (start + j < charRevealed.length) {
@@ -919,7 +915,6 @@
           console.error("kuromoji tokenization failed:", err);
         }
       } else {
-        // 万が一のフォールバック (Intl.Segmenter)
         if (typeof Intl !== 'undefined' && Intl.Segmenter) {
           const segmenter = new Intl.Segmenter('ja-JP', { granularity: 'word' });
           const particles = new Set(['は', 'が', 'を', 'に', 'へ', 'と', 'から', 'より', 'で', 'や', 'の', 'も', 'ね', 'よ', 'か', 'な', 'ぞ', 'さ', 'し', 'ば', 'て', 'ても', 'けれど', 'けれども', 'のに', 'ので', 'なら', 'たら', 'たり', 'だの', 'なり', 'やら', 'きり', 'さえ', 'すら', 'こそ', 'ばかり', 'まで', 'など', 'くらい', 'ぐらい', 'ほど']);
@@ -964,7 +959,7 @@
       updateArticlePreview(currentTurn);
     }
 
-    // --- ヒントの3段階化（AI厳選キーワード優先連動） ---
+    // --- ヒントの3段階化 ---
     function useHint() {
       if (isGameOver || hintsUsed >= MAX_HINTS) return;
       
@@ -1202,7 +1197,6 @@
       document.getElementById('result-time').textContent = timeStr; document.getElementById('result-score').textContent = finalScore;
       document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.9rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${escapeHtml(currentArticle.modeName)}</span>`;
       
-      // 常時固定の下部パネルにも終了後アクションを表示
       const shareUrl = "https://t-sukuea-latatalas.github.io/Wikinator/";
       let shareText = '';
       if (isClear) {
