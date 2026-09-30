@@ -196,6 +196,7 @@ body {
   background-color: var(--ooui-blue-hover);
 }
 
+.mw-ui-button.disabled,
 .mw-ui-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;

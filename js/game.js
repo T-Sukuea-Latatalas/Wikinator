@@ -25,7 +25,7 @@ let currentNavWord = null;
 let currentNavIndices = [];
 let currentNavCurrentPos = 0;
 
-// 内蔵フォールバックリスト（完全オフライン時用）
+// 内蔵フォールバックリスト（完全オフライン・読み込み失敗時用）
 const builtinFallbackPool = {
   easy: ["地球", "太陽", "日本", "ネコ", "水", "富士山", "イネ", "東京", "チョコレート", "野球"],
   normal: ["織田信長", "恐竜", "相対性理論", "フランス革命", "人工知能", "古代エジプト", "深海", "抗生物質"],
@@ -93,7 +93,7 @@ function mulberry32(a) {
 function getSeedFromDateString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
     hash |= 0;
   }
   return Math.abs(hash);
@@ -101,8 +101,8 @@ function getSeedFromDateString(str) {
 
 window.toggleMode = function () {
   const mode = document.querySelector('input[name="game-mode"]:checked').value;
-  document.getElementById('list-select-wrapper').style.display = mode === 'list' ? 'block' : 'none';
-  document.getElementById('daily-wrapper').style.display = mode === 'daily' ? 'block' : 'none';
+  document.getElementById('list-select-wrapper').style.display = (mode === 'list') ? 'block' : 'none';
+  document.getElementById('daily-wrapper').style.display = (mode === 'daily') ? 'block' : 'none';
 };
 
 // Web Audio API
@@ -163,6 +163,7 @@ function normalizeText(str) {
   return res;
 }
 
+// lists/*.json からリストを非同期取得
 async function loadListFromFile(listKey) {
   try {
     const res = await fetch(`./lists/${listKey}.json`);
@@ -193,7 +194,7 @@ async function fetchArticle(mode) {
       if (mode === 'daily') {
         const pickerVal = document.getElementById('daily-date-picker').value || getTodayString();
         dailyDateFormatted = pickerVal.replace(/-/g, '/');
-        const isToday = pickerVal === getTodayString();
+        const isToday = (pickerVal === getTodayString());
 
         if (isToday && questionsData?.daily) {
           const item = questionsData.daily;
@@ -214,7 +215,7 @@ async function fetchArticle(mode) {
 
         endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
       }
-      // 2. リスト選択モード
+      // 2. リスト選択モード（lists/*.json 連動）
       else if (mode === 'list') {
         const selectElem = document.getElementById('list-select');
         const listKey = selectElem.value;
@@ -226,7 +227,7 @@ async function fetchArticle(mode) {
 
         if (listData && listData.length > 0) {
           let available = listData.filter(item => {
-            const t = typeof item === 'string' ? item : item.title || '';
+            const t = typeof item === 'string' ? item : (item.title || '');
             return !playedHistory.includes(t);
           });
           if (available.length === 0) available = listData;
@@ -257,7 +258,7 @@ async function fetchArticle(mode) {
         for (const p of pages) {
           if (!p || p.missing !== undefined) continue;
 
-          const minLen = mode === 'random' ? 500 : 200;
+          const minLen = (mode === 'random') ? 500 : 200;
           if (!p.extract || p.extract.length < minLen || p.title.includes('曖昧さ回避') || p.title.includes('一覧')) continue;
           const cleanTitle = p.title.replace(/\s*\(.*?\)$/, '');
 
@@ -407,7 +408,7 @@ function processGuess(rawWord, isHint = false) {
   return true;
 }
 
-// 付属語OPEN (Intl.Segmenter高精度解析)
+// 付属語OPEN (Intl.Segmenter高精度解析・フリーズゼロ)
 window.openParticles = function () {
   if (isGameOver || helperParticleUsed) return;
   helperParticleUsed = true;
