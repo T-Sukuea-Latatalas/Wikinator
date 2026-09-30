@@ -32,7 +32,7 @@
   <div id="toast" class="toast"></div>
 
   <header id="mw-header">
-    <a href="#" onclick="location.reload()" class="wiki-logo">
+    <a href="#" onclick="location.href=location.pathname" class="wiki-logo">
       <img src="wikinator_icon.png" alt="W" class="wiki-logo-icon">
       <div class="wiki-logo-text"><strong>Wikinator</strong><span>ウィキネイター</span></div>
     </a>
@@ -45,6 +45,22 @@
 
   <main id="content">
     <div id="setup-view">
+      
+      <!-- 友達からの挑戦状バナー（?challenge=... アクセス時に表示） -->
+      <div id="challenge-banner" class="ambox" style="display:none; border-left-color: var(--ambox-yellow); background: #fffdf5;">
+        <div style="padding-top:2px;">
+          <svg class="svg-icon" viewBox="0 0 24 24" style="color:#d4a700; width:22px; height:22px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        </div>
+        <div style="flex:1;">
+          <strong class="ambox-title" style="font-size:1.1rem; color:#856404;">⚔️ 友達からの挑戦状！同じお題に挑戦します</strong>
+          <p style="margin-bottom:10px; font-size:0.92rem;">友達が解いたWikipedia記事が出題されます。答えを推理してみてください！</p>
+          <button type="button" class="mw-ui-button progressive" onclick="startChallengeGame()" style="padding:10px 20px; font-size:1.05rem;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            挑戦する
+          </button>
+        </div>
+      </div>
+
       <div class="ambox ambox-notice">
         <div style="padding-top:2px;">
           <svg class="svg-icon" style="width:24px; height:24px;" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
@@ -83,17 +99,17 @@
             <label style="font-weight:bold; display:block; margin-bottom:6px;">プレイするリストを選択:</label>
             <select id="list-select" class="mw-ui-input" style="max-width:350px;">
               <optgroup label="難易度別">
-                <option value="easy" selected>初級</option>
-                <option value="normal">中級</option>
-                <option value="hard">上級</option>
-                <option value="pr">不可能</option>
+                <option value="easy" selected>🔰 初級 (誰でも知ってる超メジャー)</option>
+                <option value="normal">🎓 中級 (一般常識・教科書レベル)</option>
+                <option value="hard">🧠 上級 (やや深い教養・歴史)</option>
+                <option value="pr">🔥 不可能 (超マニアック)</option>
               </optgroup>
               <optgroup label="ジャンル別">
-                <option value="history">歴史・事件・人物</option>
-                <option value="science">科学・自然・宇宙</option>
-                <option value="geo">地理・国・名所</option>
-                <option value="anime">アニメ・マンガ・ゲーム</option>
-                <option value="culture">文化・芸術・文学</option>
+                <option value="history">📜 歴史・事件・人物</option>
+                <option value="science">🧪 科学・自然・宇宙</option>
+                <option value="geo">🌍 地理・国・名所</option>
+                <option value="anime">🎮 アニメ・マンガ・ゲーム</option>
+                <option value="culture">🎨 文化・芸術・文学</option>
               </optgroup>
             </select>
           </div>
@@ -135,6 +151,29 @@
               </div>
             </div>
             <p id="result-desc"></p>
+            <div class="result-action-buttons">
+              <button class="mw-ui-button progressive" onclick="location.href=location.pathname">次の記事へ</button>
+              
+              <!-- 𝕏 結果をポスト -->
+              <a id="share-x-btn" href="#" target="_blank" class="mw-ui-button btn-x-post">
+                <svg class="svg-icon svg-icon-fill" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                𝕏 結果をポスト
+              </a>
+              
+              <!-- 𝕏 挑戦状をポスト -->
+              <a id="share-challenge-x-btn" href="#" target="_blank" class="mw-ui-button btn-x-challenge">
+                <svg class="svg-icon svg-icon-fill" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                𝕏 挑戦状をポスト
+              </a>
+
+              <!-- 挑戦状リンクをコピー -->
+              <button type="button" class="mw-ui-button btn-copy-link" onclick="copyChallengeUrl()">
+                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                挑戦状リンクをコピー
+              </button>
+
+              <a id="result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">Wikipedia ↗</a>
+            </div>
           </div>
         </div>
       </div>
@@ -213,10 +252,16 @@
 
       <!-- クリア/ギブアップ後の常時固定アクションボタン -->
       <div id="docked-result-actions">
-        <button class="mw-ui-button progressive" onclick="location.reload()">次の記事へ</button>
-        <a id="docked-share-x-btn" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none; background:#0f1419; color:#fff; border-color:#0f1419;">
-          <svg class="svg-icon svg-icon-fill" viewBox="0 0 24 24" style="fill:#fff;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg> ポスト
+        <button class="mw-ui-button progressive" onclick="location.href=location.pathname">次の記事へ</button>
+        <a id="docked-share-x-btn" href="#" target="_blank" class="mw-ui-button btn-x-post">
+          <svg class="svg-icon svg-icon-fill" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg> 結果ポスト
         </a>
+        <a id="docked-share-challenge-x-btn" href="#" target="_blank" class="mw-ui-button btn-x-challenge">
+          <svg class="svg-icon svg-icon-fill" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg> 挑戦状ポスト
+        </a>
+        <button type="button" class="mw-ui-button btn-copy-link" onclick="copyChallengeUrl()">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> リンクコピー
+        </button>
         <a id="docked-result-link" href="#" target="_blank" class="mw-ui-button" style="text-decoration:none;">
           Wikipedia <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
         </a>

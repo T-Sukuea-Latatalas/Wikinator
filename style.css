@@ -196,10 +196,48 @@ body {
   background-color: var(--ooui-blue-hover);
 }
 
-.mw-ui-button.disabled,
 .mw-ui-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ポスト・共有ボタン用 */
+.btn-x-post {
+  text-decoration: none;
+  background: #0f1419;
+  color: #fff !important;
+  border-color: #0f1419;
+}
+.btn-x-post:hover {
+  background: #272c30;
+  border-color: #272c30;
+}
+
+.btn-x-challenge {
+  text-decoration: none;
+  background: #856404;
+  color: #fff !important;
+  border-color: #856404;
+}
+.btn-x-challenge:hover {
+  background: #6d5203;
+  border-color: #6d5203;
+}
+
+.btn-copy-link {
+  background: #eaf3ff;
+  color: var(--ooui-blue) !important;
+  border-color: #bce8d2;
+}
+.btn-copy-link:hover {
+  background: #d4e8ff;
+}
+
+.result-action-buttons {
+  margin-top: 15px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .firstHeading {

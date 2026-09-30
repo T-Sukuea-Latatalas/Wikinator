@@ -13,6 +13,9 @@ let charRevealed;
 let audioCtx = null;
 let isMuted = false;
 
+// チャレンジモード用
+let challengeModeTitle = null;
+
 // AI生成データ (questions.json)
 let questionsData = null;
 
@@ -25,7 +28,7 @@ let currentNavWord = null;
 let currentNavIndices = [];
 let currentNavCurrentPos = 0;
 
-// 内蔵フォールバックリスト（完全オフライン・読み込み失敗時用）
+// 内蔵フォールバックリスト
 const builtinFallbackPool = {
   easy: ["地球", "太陽", "日本", "ネコ", "水", "富士山", "イネ", "東京", "チョコレート", "野球"],
   normal: ["織田信長", "恐竜", "相対性理論", "フランス革命", "人工知能", "古代エジプト", "深海", "抗生物質"],
@@ -46,6 +49,32 @@ window.escapeHtml = function (str) {
 function getTodayString() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// チャレンジタイトルの暗号化（Base64 URL-safe）
+function encodeChallengeTitle(title) {
+  try {
+    const json = JSON.stringify(title);
+    const base64 = btoa(unescape(encodeURIComponent(json)));
+    return encodeURIComponent(base64);
+  } catch (e) {
+    return encodeURIComponent(title);
+  }
+}
+
+// チャレンジタイトルの復号
+function decodeChallengeTitle(str) {
+  try {
+    const base64 = decodeURIComponent(str);
+    const json = decodeURIComponent(escape(atob(base64)));
+    return JSON.parse(json);
+  } catch (e) {
+    try {
+      return decodeURIComponent(str);
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 // questions.json の安全な読み込み
@@ -72,6 +101,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const rankSection = document.getElementById('ranking-section');
   if (setupRankWrapper && rankSection) {
     setupRankWrapper.appendChild(rankSection);
+  }
+
+  // URLパラメータのチェック（?challenge=...）
+  const params = new URLSearchParams(window.location.search);
+  const challengeCode = params.get('challenge');
+  if (challengeCode) {
+    const decoded = decodeChallengeTitle(challengeCode);
+    if (decoded) {
+      challengeModeTitle = decoded;
+      const banner = document.getElementById('challenge-banner');
+      if (banner) banner.style.display = 'flex';
+    }
   }
 
   loadQuestionsJson();
@@ -179,19 +220,24 @@ async function loadListFromFile(listKey) {
   return builtinFallbackPool[listKey] || builtinFallbackPool['easy'];
 }
 
-async function fetchArticle(mode) {
+async function fetchArticle(mode, specificTitle = null) {
   let playedHistory = JSON.parse(sessionStorage.getItem('wikinator_history') || '[]');
 
   for (let attempt = 0; attempt < 15; attempt++) {
     try {
-      let endpoint = '';
+      let endpoint = ''; 
       let listLabelName = '';
       let dailyDateFormatted = '';
       let targetTitle = '';
       let aiHints = [];
 
+      // 0. チャレンジ指定お題
+      if (mode === 'challenge' && specificTitle) {
+        targetTitle = specificTitle;
+        endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
+      }
       // 1. デイリー問題モード
-      if (mode === 'daily') {
+      else if (mode === 'daily') {
         const pickerVal = document.getElementById('daily-date-picker').value || getTodayString();
         dailyDateFormatted = pickerVal.replace(/-/g, '/');
         const isToday = (pickerVal === getTodayString());
@@ -215,7 +261,7 @@ async function fetchArticle(mode) {
 
         endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
       }
-      // 2. リスト選択モード（lists/*.json 連動）
+      // 2. リスト選択モード
       else if (mode === 'list') {
         const selectElem = document.getElementById('list-select');
         const listKey = selectElem.value;
@@ -242,7 +288,6 @@ async function fetchArticle(mode) {
         }
 
         if (!targetTitle) targetTitle = "地球";
-
         endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
       }
       // 3. 完全ランダムモード
@@ -279,12 +324,15 @@ async function fetchArticle(mode) {
               });
           }
 
-          playedHistory.push(cleanTitle);
-          if (playedHistory.length > 20) playedHistory.shift();
-          sessionStorage.setItem('wikinator_history', JSON.stringify(playedHistory));
+          if (mode !== 'challenge') {
+            playedHistory.push(cleanTitle);
+            if (playedHistory.length > 20) playedHistory.shift();
+            sessionStorage.setItem('wikinator_history', JSON.stringify(playedHistory));
+          }
 
           let finalModeName = '';
-          if (mode === 'daily') finalModeName = `デイリー問題 (${dailyDateFormatted})`;
+          if (mode === 'challenge') finalModeName = `⚔️ 友達からの挑戦状`;
+          else if (mode === 'daily') finalModeName = `デイリー問題 (${dailyDateFormatted})`;
           else if (mode === 'random') finalModeName = '完全ランダム';
           else if (mode === 'list') finalModeName = `リスト選択 (${listLabelName})`;
 
@@ -307,7 +355,7 @@ async function fetchArticle(mode) {
   }
 
   // 最終フォールバック
-  const fallbackTitle = "地球";
+  const fallbackTitle = specificTitle || "地球";
   const res = await fetch(`https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(fallbackTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`);
   const data = await res.json();
   const p = Object.values(data.query.pages)[0];
@@ -318,18 +366,26 @@ async function fetchArticle(mode) {
     normalizedExtract: normalizeText(p.extract),
     normalizedCleanTitle: normalizeText(p.title),
     url: `https://ja.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,
-    modeName: 'リスト選択 (初級)',
+    modeName: specificTitle ? '⚔️ 友達からの挑戦状' : 'リスト選択 (初級)',
     hints: [],
     aiHints: ["惑星", "太陽系", "生命"]
   };
 }
 
-window.startGame = async function () {
+// チャレンジリンク経由でのゲーム開始
+window.startChallengeGame = function () {
+  if (challengeModeTitle) {
+    window.startGame('challenge', challengeModeTitle);
+  }
+};
+
+window.startGame = async function (overrideMode = null, specificTitle = null) {
   initAudio();
-  const mode = document.querySelector('input[name="game-mode"]:checked').value;
+  const mode = overrideMode || document.querySelector('input[name="game-mode"]:checked').value;
 
   let loadingText = 'Wikipediaから記事全文を取得しています...';
-  if (mode === 'daily') loadingText = '本日のデイリー問題を取得しています...';
+  if (mode === 'challenge') loadingText = '友達からの挑戦状を読み込んでいます...';
+  else if (mode === 'daily') loadingText = '本日のデイリー問題を取得しています...';
   else if (mode === 'random') loadingText = '完全ランダム記事を探しています...';
   else if (mode === 'list') loadingText = '選択されたリストからお題を取得しています...';
 
@@ -337,7 +393,7 @@ window.startGame = async function () {
   document.getElementById('setup-view').style.display = 'none';
   document.getElementById('loading-view').style.display = 'block';
 
-  currentArticle = await fetchArticle(mode);
+  currentArticle = await fetchArticle(mode, specificTitle);
   charRevealed = new Uint16Array(currentArticle.extract.length);
   hintCandidates = currentArticle.hints;
 
@@ -408,7 +464,7 @@ function processGuess(rawWord, isHint = false) {
   return true;
 }
 
-// 付属語OPEN (Intl.Segmenter高精度解析・フリーズゼロ)
+// 付属語OPEN
 window.openParticles = function () {
   if (isGameOver || helperParticleUsed) return;
   helperParticleUsed = true;
@@ -508,7 +564,6 @@ window.useHint = function () {
     let hintWord = '';
     const normTitle = currentArticle.normalizedCleanTitle;
 
-    // 1. AI生成データ (questions.json) のキーワードを優先
     if (currentArticle.aiHints && currentArticle.aiHints.length > 0) {
       const availableAiHints = currentArticle.aiHints.filter(c => {
         const norm = normalizeText(c);
@@ -520,7 +575,6 @@ window.useHint = function () {
       }
     }
 
-    // 2. なければ Wikipedia の関連リンクから選定
     if (!hintWord && hintCandidates.length > 0) {
       const availableHints = hintCandidates.filter(c => {
         const norm = normalizeText(c);
@@ -532,7 +586,6 @@ window.useHint = function () {
       }
     }
 
-    // 3. 最終フォールバック
     if (!hintWord) {
       hintWord = currentArticle.extract.replace(/\s/g, '').substring(50, 55);
     }
@@ -694,6 +747,33 @@ window.closeNav = function () {
   currentNavIndices = [];
 };
 
+// ワンタップで挑戦状URLをクリップボードにコピー
+window.copyChallengeUrl = function () {
+  if (!currentArticle || !currentArticle.title) return;
+  const code = encodeChallengeTitle(currentArticle.title);
+  const challengeUrl = `https://t-sukuea-latatalas.github.io/Wikinator/?challenge=${code}`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(challengeUrl).then(() => {
+      window.showToast("⚔️ 挑戦状リンクをコピーしました！");
+    }).catch(() => {
+      fallbackCopy(challengeUrl);
+    });
+  } else {
+    fallbackCopy(challengeUrl);
+  }
+};
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  window.showToast("⚔️ 挑戦状リンクをコピーしました！");
+}
+
 window.giveUp = function () {
   if (isGameOver) return;
   if (!confirm('ギブアップして答えを見ますか？')) return;
@@ -748,17 +828,28 @@ function endGame(isClear) {
   document.getElementById('result-score').textContent = finalScore;
   document.getElementById('result-desc').innerHTML = `正解の記事は「<strong>${window.escapeHtml(currentArticle.title)}</strong>」でした。<br><span style="font-size:0.9rem; color:var(--text-muted); display:inline-block; margin-top:4px;">出題モード: ${window.escapeHtml(currentArticle.modeName)}</span>`;
 
-  // 常時固定の下部パネルにも終了後アクションを表示
+  // 1. 通常の結果ポストリンク生成
   const shareUrl = "https://t-sukuea-latatalas.github.io/Wikinator/";
-  let shareText = '';
+  let resultShareText = '';
   if (isClear) {
-    shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n得点："${finalScore}"点\nタイム："${timeStr}"\n${shareUrl}\n#Wikinator`;
+    resultShareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n得点："${finalScore}"点\nタイム："${timeStr}"\n${shareUrl}\n#Wikinator`;
   } else {
-    shareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n\nクリアならず\n\n${shareUrl}\n#Wikinator`;
+    resultShareText = `📚 Wikinator\n記事名："${currentArticle.title}"\n\nクリアならず\n\n${shareUrl}\n#Wikinator`;
   }
+  const resultIntentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(resultShareText)}`;
+  document.getElementById('share-x-btn').href = resultIntentUrl;
+  document.getElementById('docked-share-x-btn').href = resultIntentUrl;
 
-  const xIntentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-  document.getElementById('docked-share-x-btn').href = xIntentUrl;
+  // 2. 挑戦状ポストリンク生成（ネタバレ防止・挑戦用リンク付き）
+  const challengeCode = encodeChallengeTitle(currentArticle.title);
+  const challengeUrl = `https://t-sukuea-latatalas.github.io/Wikinator/?challenge=${challengeCode}`;
+  const challengeShareText = `⚔️ Wikinatorからの挑戦状！\n私が解いたWikipedia記事を当てられる？\n\n👇 同じ問題に挑戦する\n${challengeUrl}\n#Wikinator #Wikipedia推測`;
+  const challengeIntentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(challengeShareText)}`;
+  document.getElementById('share-challenge-x-btn').href = challengeIntentUrl;
+  document.getElementById('docked-share-challenge-x-btn').href = challengeIntentUrl;
+
+  // 外部記事リンク
+  document.getElementById('result-link').href = currentArticle.url;
   document.getElementById('docked-result-link').href = currentArticle.url;
   document.getElementById('docked-result-actions').style.display = 'flex';
 
