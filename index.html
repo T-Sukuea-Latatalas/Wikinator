@@ -199,10 +199,10 @@
           <div id="difficulty-wrapper" style="margin-bottom:15px; display:block;">
             <label style="font-weight:bold; display:block; margin-bottom:6px;">難易度を選択:</label>
             <select id="difficulty-select" class="mw-ui-input" style="max-width:350px;">
-              <option value="easy" selected>初級</option>
-              <option value="normal">中級</option>
-              <option value="hard">上級</option>
-              <option value="pr">不可能</option>
+              <option value="easy" selected>初級 (誰でも知ってる超メジャー)</option>
+              <option value="normal">中級 (一般常識・教科書レベル)</option>
+              <option value="hard">上級 (やや深い教養・歴史)</option>
+              <option value="pr">不可能 (超マニアック)</option>
             </select>
           </div>
 
@@ -216,11 +216,11 @@
           <div id="genre-wrapper" style="margin-bottom:15px; display:none;">
             <label style="font-weight:bold; display:block; margin-bottom:6px;">ジャンルを選択:</label>
             <select id="genre-select" class="mw-ui-input" style="max-width:350px;">
-              <option value="history" selected>歴史・事件・人物</option>
-              <option value="science">科学・自然・宇宙</option>
-              <option value="geo">地理・国・名所</option>
-              <option value="anime">アニメ・マンガ・ゲーム</option>
-              <option value="culture">文化・芸術・文学</option>
+              <option value="history" selected>📜 歴史・事件・人物</option>
+              <option value="science">🧪 科学・自然・宇宙</option>
+              <option value="geo">🌍 地理・国・名所</option>
+              <option value="anime">🎮 アニメ・マンガ・ゲーム</option>
+              <option value="culture">🎨 文化・芸術・文学</option>
             </select>
           </div>
 
@@ -495,6 +495,41 @@
       pr: ["地球", "恐竜", "月", "太陽系", "ピラミッド", "織田信長", "富士山"]
     };
 
+    // ジャンル別 超充実名作プール（各30件以上）
+    const comprehensiveGenrePool = {
+      history: [
+        "織田信長", "フランス革命", "産業革命", "明治維新", "冷戦", "本能寺の変", "関ヶ原の戦い", "第二次世界大戦",
+        "古代エジプト", "ローマ帝国", "坂本龍馬", "徳川家康", "豊臣秀吉", "大航海時代", "宗教改革", "ウェストファリア条約",
+        "キューバ危機", "サラエボ事件", "パクス・ロマーナ", "ハンムラビ法典", "トロイア戦争", "ペロポネソス戦争", "十字軍",
+        "三国志", "紫禁城", "アレクサンドリア図書館", "アメリカ独立宣言", "ソビエト連邦", "ベルリンの壁", "真珠湾攻撃"
+      ],
+      science: [
+        "相対性理論", "量子力学", "人工知能", "ブラックホール", "DNA", "万有引力", "光合成", "抗生物質",
+        "深海", "太陽系", "超新星", "大陸移動説", "素数", "エントロピー", "ヒッグス粒子", "一般相対性理論",
+        "不確定性原理", "カオス理論", "超弦理論", "暗黒物質", "ビッグバン", "カンブリア爆発", "始祖鳥", "三葉虫",
+        "超電導", "周期表", "放射線", "遺伝子組換え", "クローン", "ニュートリノ"
+      ],
+      geo: [
+        "富士山", "サハラ砂漠", "アマゾン川", "エベレスト", "南極大陸", "太平洋", "万里の長城", "ピラミッド",
+        "タージ・マハル", "コロッセオ", "自由の女神像", "世界遺産", "マチュ・ピチュ", "イースター島", "ナスカの地上絵",
+        "グランド・キャニオン", "死海", "ナイル川", "ガラパゴス諸島", "グレート・バリア・リーフ", "モン・サン＝ミシェル",
+        "アンコール・ワット", "ハワイ諸島", "アルプス山脈", "北極", "地中海", "バイカル湖", "イグアスの滝", "アクロポリス", "オーロラ"
+      ],
+      anime: [
+        "ポケットモンスター", "ドラゴンボール", "スタジオジブリ", "千と千尋の神隠し", "スーパーマリオ", "新世紀エヴァンゲリオン",
+        "ONE PIECE", "機動戦士ガンダム", "名探偵コナン", "ドラえもん", "鬼滅の刃", "進撃の巨人", "NARUTO -ナルト-",
+        "美少女戦士セーラームーン", "鉄腕アトム", "ゼルダの伝説", "ファイナルファンタジー", "ドラゴンクエスト", "DEATH NOTE",
+        "鋼の錬金術師", "呪術廻戦", "SLAM DUNK", "クレヨンしんちゃん", "ルパン三世", "キャプテン翼", "モンスターハンター",
+        "Minecraft", "ソードアート・オンライン", "AKIRA", "マリオシリーズ"
+      ],
+      culture: [
+        "ルネサンス", "モナ・リザ", "シェイクスピア", "古典音楽", "歌舞伎", "浮世絵", "ノーベル賞", "オリンピック",
+        "万国博覧会", "著作権", "印刷", "神曲", "旧約聖書", "資本論", "種の起源", "源氏物語", "能", "茶道",
+        "ベートーヴェン", "モーツァルト", "レオナルド・ダ・ヴィンチ", "ミケランジェロ", "ピカソ", "ゴッホ", "ルーヴル美術館",
+        "サグラダ・ファミリア", "パルテノン神殿", "バベルの塔", "ギルガメシュ叙事詩", "ハムレット"
+      ]
+    };
+
     window.escapeHtml = function(str) {
       if(!str) return '';
       return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
@@ -513,7 +548,7 @@
           questionsData = await res.json();
         }
       } catch (e) {
-        console.info("questions.json could not be loaded, using fallback.");
+        console.info("questions.json は現在利用できません。フォールバックデータを使用します。");
       }
     }
 
@@ -597,7 +632,7 @@
     }
     function normalizeText(str) { let res = ''; for(let i=0; i<str.length; i++) res += normalizeChar(str[i]); return res; }
 
-    // questions.json の安全なデータ抽出ヘルパー（配列・オブジェクト両対応）
+    // questions.json の安全なデータ抽出ヘルパー（単一オブジェクト・配列両対応）
     function extractTargetFromData(raw, playedHistory) {
       if (!raw) return null;
       let items = [];
@@ -615,7 +650,8 @@
         const t = typeof item === 'string' ? item : item.title;
         return !playedHistory.includes(t);
       });
-      if (available.length === 0) available = items;
+      if (available.length === 0) return null; // プレイ済みならnullを返して次のプールに委ねる
+
       const chosen = available[Math.floor(Math.random() * available.length)];
       if (typeof chosen === 'string') {
         return { title: chosen, hints: [] };
@@ -659,36 +695,38 @@
 
             endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
           }
-          // 2. 厳選記事モード
+          // 2. 厳選記事モード（★Firebase を最優先で取得）
           else if (mode === 'curated') {
             const diff = document.getElementById('difficulty-select').value;
             const diffNames = { easy: '初級', normal: '中級', hard: '上級', pr: '不可能' };
             diffName = diffNames[diff] || diff;
 
-            // questions.json からの取得を試行
-            if (questionsData?.difficulty?.[diff]) {
-              const resObj = extractTargetFromData(questionsData.difficulty[diff], playedHistory);
-              if (resObj) { targetTitle = resObj.title; aiHints = resObj.hints; }
-            }
-
-            // Firebase からの取得を試行（フォールバック）
-            if (!targetTitle && window.firebaseDB) {
+            // ① 最優先: Firebase Realtime Database からお題を取得
+            if (window.firebaseDB) {
               try {
                 const { get, ref } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js");
                 const listSnap = await get(ref(window.firebaseDB, `curated_lists/${diff}`));
                 const rawList = listSnap.val();
                 if (rawList) {
                   const list = Array.isArray(rawList) ? rawList.filter(Boolean) : Object.values(rawList);
-                  if (list.length > 0) {
-                    let available = list.filter(t => !playedHistory.includes(t));
-                    if (available.length === 0) available = list;
+                  // 文字列配列・オブジェクト配列の双方に対応
+                  const titleList = list.map(item => typeof item === 'string' ? item : (item.title || '')).filter(Boolean);
+                  if (titleList.length > 0) {
+                    let available = titleList.filter(t => !playedHistory.includes(t));
+                    if (available.length === 0) available = titleList;
                     targetTitle = available[Math.floor(Math.random() * available.length)];
                   }
                 }
               } catch (e) { console.warn("Firebase fetch error:", e); }
             }
 
-            // 内蔵リストフォールバック
+            // ② フォールバック: questions.json から取得
+            if (!targetTitle && questionsData?.difficulty?.[diff]) {
+              const resObj = extractTargetFromData(questionsData.difficulty[diff], playedHistory);
+              if (resObj) { targetTitle = resObj.title; aiHints = resObj.hints; }
+            }
+
+            // ③ 最終フォールバック: 内蔵プールから取得
             if (!targetTitle) {
               const fList = fallbackCuratedPool[diff] || fallbackCuratedPool['easy'];
               let available = fList.filter(t => !playedHistory.includes(t));
@@ -698,27 +736,24 @@
 
             endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
           }
-          // 3. ジャンル別モード
+          // 3. ジャンル別モード（★超充実プール & 重複防止）
           else if (mode === 'genre') {
             const genre = document.getElementById('genre-select').value;
             const genreLabels = { history: '歴史', science: '科学', geo: '地理', anime: 'アニメ', culture: '文化' };
             diffName = genreLabels[genre] || genre;
 
+            // ① questions.json に今日のお題があり、まだ未プレイなら最優先
             if (questionsData?.genres?.[genre]) {
               const resObj = extractTargetFromData(questionsData.genres[genre], playedHistory);
               if (resObj) { targetTitle = resObj.title; aiHints = resObj.hints; }
             }
 
+            // ② プレイ済み、またはquestions.jsonが無い場合は、30件以上の超充実プールから未出題を優先抽選
             if (!targetTitle) {
-              const genreFallbacks = {
-                history: ["織田信長", "フランス革命", "産業革命", "明治維新", "冷戦"],
-                science: ["相対性理論", "量子力学", "人工知能", "ブラックホール", "DNA"],
-                geo: ["富士山", "サハラ砂漠", "アマゾン川", "エベレスト", "南極大陸"],
-                anime: ["ポケットモンスター", "ドラゴンボール", "スタジオジブリ", "千と千尋の神隠し", "スーパーマリオ"],
-                culture: ["ルネサンス", "モナ・リザ", "シェイクスピア", "古典音楽", "歌舞伎"]
-              };
-              const gList = genreFallbacks[genre] || genreFallbacks['history'];
-              targetTitle = gList[Math.floor(Math.random() * gList.length)];
+              const gList = comprehensiveGenrePool[genre] || comprehensiveGenrePool['history'];
+              let available = gList.filter(t => !playedHistory.includes(t));
+              if (available.length === 0) available = gList;
+              targetTitle = available[Math.floor(Math.random() * available.length)];
             }
 
             endpoint = `https://ja.wikipedia.org/w/api.php?action=query&prop=extracts|categories|links&titles=${encodeURIComponent(targetTitle)}&redirects=1&explaintext=1&cllimit=max&pllimit=max&plnamespace=0&origin=*&format=json`;
@@ -751,8 +786,9 @@
                   .filter(t => { const normT = normalizeText(t); if (normT.includes(normTitle) || normTitle.includes(normT)) return false; return normExtract.includes(normT); });
               }
 
+              // 履歴の重複防止（直近20件を保持）
               playedHistory.push(cleanTitle);
-              if (playedHistory.length > 5) playedHistory.shift();
+              if (playedHistory.length > 20) playedHistory.shift();
               sessionStorage.setItem('wikinator_history', JSON.stringify(playedHistory));
 
               let finalModeName = '';
@@ -792,7 +828,7 @@
       let loadingText = 'Wikipediaから記事全文を取得しています...';
       if(mode === 'daily') loadingText = '本日のデイリー問題を取得しています...';
       else if(mode === 'random') loadingText = '完全ランダム記事を探しています...';
-      else if(mode === 'curated') loadingText = '厳選お題を取得しています...';
+      else if(mode === 'curated') loadingText = 'Firebaseから厳選お題を取得しています...';
       else if(mode === 'genre') loadingText = '指定ジャンルの記事を取得しています...';
       
       document.getElementById('loading-msg').textContent = loadingText;
