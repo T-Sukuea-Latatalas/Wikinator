@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getDatabase, ref, push, query, orderByChild, limitToLast, get, startAt } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+import { getDatabase, ref, push, query, limitToLast, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6UvafVPeO9asW7e_e7m1LOvPyfRhm_hQ",
@@ -21,16 +21,16 @@ try {
   console.error("Firebase Init Error:", e);
 }
 
-// 週間 or 全期間
-window.currentRankingPeriod = 'weekly';
+// デフォルト期間: デイリー
+window.currentRankingPeriod = 'daily';
 
-// タブ切り替え
+// タブ切り替え（4タブ連動）
 window.switchRankingTab = function (period) {
   window.currentRankingPeriod = period;
-  const tabWeekly = document.getElementById('tab-weekly');
-  const tabAll = document.getElementById('tab-all');
-  if (tabWeekly) tabWeekly.classList.toggle('progressive', period === 'weekly');
-  if (tabAll) tabAll.classList.toggle('progressive', period === 'all');
+  ['daily', 'weekly', 'monthly', 'all'].forEach(p => {
+    const btn = document.getElementById(`tab-${p}`);
+    if (btn) btn.classList.toggle('progressive', p === period);
+  });
   window.loadLeaderboard();
 };
 
@@ -56,7 +56,7 @@ window.submitScoreToDB = async function (name, score, timeStr, article) {
   }
 };
 
-// ランキング取得 & 描画
+// ランキング取得 & 描画（完全JS側フィルタリングで確実に動作）
 window.loadLeaderboard = async function () {
   const tbody = document.getElementById('leaderboard-body');
   if (!tbody) return;
@@ -68,32 +68,45 @@ window.loadLeaderboard = async function () {
 
   tbody.innerHTML = '<tr><td colspan="6">読み込み中...</td></tr>';
   try {
-    let data = [];
-    if (window.currentRankingPeriod === 'weekly') {
-      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const scoresRef = query(ref(db, 'leaderboard'), orderByChild('timestamp'), startAt(oneWeekAgo));
-      const snapshot = await get(scoresRef);
-      snapshot.forEach(child => {
-        data.push(child.val());
-      });
-      data.sort((a, b) => b.score - a.score);
-      data = data.slice(0, 10);
-    } else {
-      const scoresRef = query(ref(db, 'leaderboard'), orderByChild('score'), limitToLast(10));
-      const snapshot = await get(scoresRef);
-      snapshot.forEach(child => {
-        data.push(child.val());
-      });
-      data.sort((a, b) => b.score - a.score);
+    // 直近の登録データを一括取得（インデックス不備エラーを完全回避）
+    const scoresRef = query(ref(db, 'leaderboard'), limitToLast(500));
+    const snapshot = await get(scoresRef);
+    
+    let allData = [];
+    snapshot.forEach(child => {
+      const val = child.val();
+      if (val && typeof val.score === 'number') {
+        allData.push(val);
+      }
+    });
+
+    const now = Date.now();
+    let filtered = allData;
+
+    // JavaScript側で各期間を正確にフィルタリング
+    if (window.currentRankingPeriod === 'daily') {
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+      filtered = allData.filter(d => (d.timestamp || 0) >= oneDayAgo);
+    } else if (window.currentRankingPeriod === 'weekly') {
+      const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+      filtered = allData.filter(d => (d.timestamp || 0) >= oneWeekAgo);
+    } else if (window.currentRankingPeriod === 'monthly') {
+      const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+      filtered = allData.filter(d => (d.timestamp || 0) >= oneMonthAgo);
     }
+    // 'all' の場合は全期間そのまま
+
+    // スコア降順ソート & 上位10件抽出
+    filtered.sort((a, b) => b.score - a.score);
+    const top10 = filtered.slice(0, 10);
 
     tbody.innerHTML = '';
-    if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6">スコアなし</td></tr>';
+    if (top10.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6">該当期間のスコアはまだありません</td></tr>';
       return;
     }
 
-    data.forEach((d, i) => {
+    top10.forEach((d, i) => {
       const tr = document.createElement('tr');
       const artName = d.article || '-';
       const escapeFunc = window.escapeHtml || (s => s);
@@ -114,7 +127,7 @@ window.loadLeaderboard = async function () {
       tbody.appendChild(tr);
     });
   } catch (e) {
-    console.error(e);
+    console.error("Leaderboard error:", e);
     tbody.innerHTML = '<tr><td colspan="6">ランキング取得エラー</td></tr>';
   }
 };

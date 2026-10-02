@@ -196,6 +196,7 @@ body {
   background-color: var(--ooui-blue-hover);
 }
 
+.mw-ui-button.disabled,
 .mw-ui-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -488,15 +489,18 @@ body {
   text-align: left;
 }
 
+/* ランキングタブ: スマホで綺麗に収まるよう調整 */
 .ranking-tabs {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
 }
 
 .ranking-tabs .mw-ui-button {
-  padding: 4px 10px;
-  font-size: 0.82rem;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  gap: 3px;
 }
 
 .wiki-ext-link {
@@ -537,5 +541,9 @@ body {
   }
   .bottom-history-container {
     max-height: 120px;
+  }
+  .ranking-tabs .mw-ui-button {
+    padding: 3px 6px;
+    font-size: 0.75rem;
   }
 }
